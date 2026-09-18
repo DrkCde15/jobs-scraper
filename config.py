@@ -29,7 +29,7 @@ def parse_email_list(value: str | None) -> list[str]:
 
 
 # --- Busca ---------------------------------------------------
-JOB_ALERT_TITLE = "Vagas Estágio, Júnior e Pleno - Tech"
+JOB_ALERT_TITLE = "Vagas Júnior e Trainee - Dados"
 
 # Sites de vagas varridos (nome -> cláusula de domínio para a busca).
 SITES = {
@@ -52,33 +52,17 @@ ENABLED_SITES = [
 ] or list(SITES)
 
 QUERY_STEMS = [
-    # Estágio
-    "estagio tecnologia brasil",
-    "estagio dados brasil",
-    "estagio desenvolvimento brasil",
-    "estagio seguranca brasil",
-    "estagiario dados brasil",
-    "estagiario desenvolvimento brasil",
-    "estagiario seguranca brasil",
-    # Júnior / trainee
-    "junior tecnologia brasil",
-    "desenvolvedor junior brasil",
-    "desenvolvedor backend junior brasil",
-    "desenvolvedor frontend junior brasil",
-    "desenvolvedor fullstack junior brasil",
+    # Ciencia de dados, analise de dados e engenharia de dados.
+    "cientista de dados junior brasil",
+    "data scientist junior brasil",
     "analista de dados junior brasil",
+    "data analyst junior brasil",
     "engenheiro de dados junior brasil",
-    "cybersecurity junior brasil",
-    "trainee tecnologia brasil",
-    # Pleno
-    "desenvolvedor pleno brasil",
-    "desenvolvedor backend pleno brasil",
-    "desenvolvedor frontend pleno brasil",
-    "desenvolvedor fullstack pleno brasil",
-    "analista de dados pleno brasil",
-    "engenheiro de dados pleno brasil",
-    "devops pleno brasil",
-    "qa pleno brasil",
+    "data engineer junior brasil",
+    "trainee ciencia de dados brasil",
+    "trainee analise de dados brasil",
+    "trainee engenharia de dados brasil",
+    "data trainee brasil",
 ]
 
 SEARCH_QUERIES = [

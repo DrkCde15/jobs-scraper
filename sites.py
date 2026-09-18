@@ -211,9 +211,9 @@ def validate_job_fields(
     if not is_target_location(location, scope_text):
         raise JobRejected(location_rejection_reason(location, workplace))
     if config.REQUIRE_TARGET_ROLE and not is_target_role(title, scope_text):
-        raise JobRejected("area fora do escopo tech")
+        raise JobRejected("area fora do escopo de dados")
     if not is_desired_seniority(title, scope_text):
-        raise JobRejected("nivel nao e estagio/junior/pleno")
+        raise JobRejected("nivel nao e junior/trainee")
 
 
 # ---------------------------------------------------------------

@@ -1,5 +1,5 @@
 """
-Orquestra a busca de vagas tech (estagio/junior/pleno) no Brasil
+Orquestra a busca de vagas de dados (junior/trainee) no Brasil
 e o envio de alertas por e-mail.
 """
 

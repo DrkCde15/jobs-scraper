@@ -104,3 +104,7 @@ REQUIRE_POSTED_AGE = env_bool("REQUIRE_POSTED_AGE", default=True)
 # --- Arquivos de estado -------------------------------------
 SEEN_JOBS_FILE = "seen_jobs.json"
 LOG_FILE = "scraper.log"
+
+# --- Empresas remote-friendly -------------------------------
+REMOTE_COMPANIES_FILE = os.getenv("REMOTE_COMPANIES_FILE", "empresas_remote.csv")
+REMOTE_COMPANY_QUERY_LIMIT = int(os.getenv("REMOTE_COMPANY_QUERY_LIMIT", "8"))

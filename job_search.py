@@ -8,6 +8,7 @@ from typing import Any
 from ddgs import DDGS
 
 import config
+from companies import build_company_queries
 from filters import has_known_blocked_age, is_closed_text, is_desired_seniority, is_target_role
 from models import Job
 from sites import is_supported_job_url, job_site_name, normalize_job_url
@@ -24,8 +25,12 @@ def ddg_search() -> list[Job]:
     results: list[Job] = []
     seen_urls: set[str] = set()
 
+    queries = list(config.SEARCH_QUERIES) + build_company_queries(
+        config.REMOTE_COMPANIES_FILE,
+        config.REMOTE_COMPANY_QUERY_LIMIT,
+    )
     with DDGS() as duckduckgo:
-        for query in config.SEARCH_QUERIES:
+        for query in queries:
             results.extend(search_query_jobs(duckduckgo, query, seen_urls))
             time.sleep(QUERY_DELAY_SECONDS)
 

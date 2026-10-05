@@ -71,10 +71,18 @@ def remember_seen_jobs(seen_jobs: set[str], jobs: Iterable[Job]) -> None:
 
 
 def main() -> None:
+    if should_check_sites(sys.argv):
+        from site_check import main as check_sites_main
+
+        raise SystemExit(check_sites_main(sys.argv[1:]))
     if should_run_once(sys.argv):
         run_once()
         return
     run_continuously()
+
+
+def should_check_sites(argv: Iterable[str]) -> bool:
+    return "--check-sites" in argv
 
 
 def should_run_once(argv: Iterable[str]) -> bool:

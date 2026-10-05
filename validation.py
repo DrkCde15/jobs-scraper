@@ -11,6 +11,7 @@ from typing import Any
 
 import config
 import sites
+from companies import annotate_job
 from models import Job, JobRejected
 from text_utils import normalize_text
 
@@ -88,5 +89,7 @@ def enrich_jobs_with_page(page: Any, jobs: Iterable[Job]) -> list[Job]:
 
 def enrich_job(page: Any, job: Job) -> Job:
     if sites.is_linkedin_job_url(job["url"]):
-        return sites.enrich_linkedin_job(page, job)
-    return sites.enrich_generic_job(page, job)
+        enriched = sites.enrich_linkedin_job(page, job)
+    else:
+        enriched = sites.enrich_generic_job(page, job)
+    return annotate_job(enriched, config.REMOTE_COMPANIES_FILE)

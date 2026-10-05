@@ -170,6 +170,23 @@ def build_email_footer() -> str:
     </div>"""
 
 
+def build_remote_badge(job: Job) -> str:
+    if not job.get("remote_friendly"):
+        return ""
+    region = escape(str(job.get("remote_region") or "remota").strip() or "remota")
+    careers_url = (job.get("careers_url") or "").strip()
+    link = (
+        f' &nbsp;·&nbsp; <a href="{escape(careers_url, quote=True)}" target="_blank"'
+        ' style="color:#0a66c2;">carreiras</a>'
+        if careers_url
+        else ""
+    )
+    return f"""
+          <p style="margin:4px 0;font-size:12px;color:#0a66c2;font-weight:600;">
+            🌍 Remote-friendly · {region}{link}
+          </p>"""
+
+
 def build_email_card(job: Job) -> str:
     title = escape(job.get("title", DEFAULT_EMAIL_TITLE))
     company = escape(job.get("company", "—"))
@@ -182,6 +199,7 @@ def build_email_card(job: Job) -> str:
         escape(str(job.get("source"))).strip(),
     ]
     meta_line = " · ".join(part for part in meta_parts if part)
+    remote_badge = build_remote_badge(job)
 
     return f"""
         <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;
@@ -190,6 +208,7 @@ def build_email_card(job: Job) -> str:
           <p style="margin:0 0 2px;font-size:14px;color:#4a5568;">
             🏢 {company} &nbsp;|&nbsp; 📍 {location}
           </p>
+          {remote_badge}
           {f'<p style="margin:0 0 8px;font-size:12px;color:#a0aec0;">{meta_line}</p>' if meta_line else ''}
           <p style="margin:8px 0 12px;font-size:13px;color:#718096;">{snippet}</p>
           <a href="{url}" target="_blank"

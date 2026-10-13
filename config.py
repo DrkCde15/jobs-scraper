@@ -29,7 +29,7 @@ def parse_email_list(value: str | None) -> list[str]:
 
 
 # --- Busca ---------------------------------------------------
-JOB_ALERT_TITLE = "Vagas Júnior e Trainee - Dados"
+JOB_ALERT_TITLE = "Vagas Administrativas, Operacionais e Financeiras"
 
 # Sites de vagas varridos (nome -> cláusula de domínio para a busca).
 SITES = {
@@ -52,17 +52,28 @@ ENABLED_SITES = [
 ] or list(SITES)
 
 QUERY_STEMS = [
-    # Ciencia de dados, analise de dados e engenharia de dados.
-    "cientista de dados junior brasil",
-    "data scientist junior brasil",
-    "analista de dados junior brasil",
-    "data analyst junior brasil",
-    "engenheiro de dados junior brasil",
-    "data engineer junior brasil",
-    "trainee ciencia de dados brasil",
-    "trainee analise de dados brasil",
-    "trainee engenharia de dados brasil",
-    "data trainee brasil",
+    # 1. Assistente administrativo.
+    "assistente administrativo brasil",
+    "auxiliar administrativo brasil",
+    "assistente de operacoes brasil",
+    # 2. Operacoes / back-office.
+    "auxiliar de operacoes brasil",
+    "assistente de cadastro brasil",
+    "analista de operacoes junior brasil",
+    # 3. Assistente de dados / relatorios (ponte admin-dados).
+    "assistente de indicadores brasil",
+    "assistente de relatorios brasil",
+    "auxiliar de bi brasil",
+    # 4. Financeiro.
+    "auxiliar financeiro brasil",
+    "assistente de faturamento brasil",
+    "assistente de controladoria brasil",
+    # Vagas em ingles publicadas no Brasil.
+    "administrative assistant brasil",
+    "operations assistant brasil junior",
+    # Aprendiz (porta de entrada).
+    "jovem aprendiz administrativo brasil",
+    "jovem aprendiz brasil",
 ]
 
 SEARCH_QUERIES = [

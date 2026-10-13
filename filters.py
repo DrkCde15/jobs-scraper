@@ -222,10 +222,20 @@ SENIORITY_BLOCKLIST = {
     "5+ years",
 }
 
+APRENDIZ_MARKERS = {
+    "jovem aprendiz",
+    "aprendiz",
+    "apprentice",
+}
+
 JUNIOR_MARKERS = {
     "junior",
     "jr",
     "jr.",
+    "auxiliar",
+    "aux.",
+    "assistente",
+    *APRENDIZ_MARKERS,
     "trainee",
     "entry level",
     "entry-level",
@@ -248,35 +258,41 @@ PLENO_MARKERS = {
 }
 
 TARGET_ROLE_MARKERS = {
-    "analise de dados",
-    "analista de dados",
-    "analista dados",
-    "analista jr de dados",
-    "analista junior de dados",
-    "analista trainee de dados",
-    "cientista de dados",
-    "ciencia de dados",
-    "cientista jr de dados",
-    "cientista junior de dados",
-    "cientista trainee de dados",
-    "engenheiro de dados",
-    "engenheira de dados",
-    "engenharia de dados",
-    "engenheiro jr de dados",
-    "engenheiro junior de dados",
-    "engenheiro trainee de dados",
-    "engenheira jr de dados",
-    "engenheira junior de dados",
-    "engenheira trainee de dados",
-    "data analyst",
-    "data analytics",
-    "data scientist",
-    "data science",
-    "data engineer",
-    "data trainee",
-    "analytics engineer",
-    "trainee de dados",
-    "trainee dados",
+    # 1. Assistente administrativo.
+    "assistente administrativo",
+    "assistente administrativa",
+    "auxiliar administrativo",
+    "auxiliar administrativa",
+    "assistente de operacoes",
+    "auxiliar de operacoes",
+    # 2. Operacoes / back-office.
+    "assistente de cadastro",
+    "auxiliar de cadastro",
+    "analista de operacoes",
+    "administrative assistant",
+    "operations assistant",
+    "office assistant",
+    "back office",
+    "backoffice",
+    "back-office",
+    # 3. Assistente de dados / relatorios.
+    "assistente de indicadores",
+    "auxiliar de indicadores",
+    "assistente de relatorios",
+    "auxiliar de relatorios",
+    "assistente de bi",
+    "auxiliar de bi",
+    # 4. Financeiro.
+    "auxiliar financeiro",
+    "assistente financeiro",
+    "auxiliar de faturamento",
+    "assistente de faturamento",
+    "auxiliar de controladoria",
+    "assistente de controladoria",
+    "auxiliar contabil",
+    "assistente contabil",
+    # Aprendiz (porta de entrada, qualquer area).
+    *APRENDIZ_MARKERS,
 }
 
 ROLE_BLOCKLIST = {
@@ -284,10 +300,6 @@ ROLE_BLOCKLIST = {
     "sales",
     "vendas",
     "comercial",
-    "financeiro",
-    "contabil",
-    "contabilidade",
-    "administrativo",
     "rh",
     "recursos humanos",
     "recruiter",
@@ -307,8 +319,6 @@ OUT_OF_SCOPE_TITLE_MARKERS = {
     "talent pool",
     "cadastro reserva",
     "pipeline",
-    "jovem aprendiz",
-    "apprentice",
     "data entry",
 }
 
@@ -456,9 +466,12 @@ def is_target_location(location_text: str, context_text: str = "") -> bool:
 
 def has_seniority_block(text: str) -> bool:
     normalized_text = normalize_text(text)
-    return contains_any_marker(normalized_text, SENIORITY_BLOCKLIST) or bool(
-        EXPERIENCE_BLOCK_RE.search(normalized_text)
-    )
+    if contains_any_marker(normalized_text, SENIORITY_BLOCKLIST):
+        return True
+    if contains_any_marker(normalized_text, APRENDIZ_MARKERS):
+        # Aprendiz nao exige experiencia: "14 a 24 anos" e idade, nao requisito.
+        return False
+    return bool(EXPERIENCE_BLOCK_RE.search(normalized_text))
 
 
 def is_junior_or_intern(title: str, supporting_text: str) -> bool:

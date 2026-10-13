@@ -126,7 +126,7 @@ def build_company_queries(
         region = normalize_text(company["region"])
         if not any(marker in region for marker in QUERYABLE_REGION_MARKERS):
             continue
-        queries.append(f'"{company["name"]}" dados junior OR trainee brasil')
+        queries.append(f'"{company["name"]}" auxiliar brasil')
         if len(queries) >= limit:
             break
     return queries

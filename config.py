@@ -29,7 +29,7 @@ def parse_email_list(value: str | None) -> list[str]:
 
 
 # --- Busca ---------------------------------------------------
-JOB_ALERT_TITLE = "Vagas Administrativas, Operacionais e Financeiras"
+JOB_ALERT_TITLE = "Vagas Remotas Administrativas, Operacionais e Financeiras"
 
 # Sites de vagas varridos (nome -> cláusula de domínio para a busca).
 SITES = {
@@ -53,27 +53,27 @@ ENABLED_SITES = [
 
 QUERY_STEMS = [
     # 1. Assistente administrativo.
-    "assistente administrativo brasil",
-    "auxiliar administrativo brasil",
-    "assistente de operacoes brasil",
+    "assistente administrativo remoto brasil",
+    "auxiliar administrativo remoto brasil",
+    "assistente de operacoes remoto brasil",
     # 2. Operacoes / back-office.
-    "auxiliar de operacoes brasil",
-    "assistente de cadastro brasil",
-    "analista de operacoes junior brasil",
+    "auxiliar de operacoes remoto brasil",
+    "assistente de cadastro remoto brasil",
+    "analista de operacoes junior remoto brasil",
     # 3. Assistente de dados / relatorios (ponte admin-dados).
-    "assistente de indicadores brasil",
-    "assistente de relatorios brasil",
-    "auxiliar de bi brasil",
+    "assistente de indicadores remoto brasil",
+    "assistente de relatorios remoto brasil",
+    "auxiliar de bi remoto brasil",
     # 4. Financeiro.
-    "auxiliar financeiro brasil",
-    "assistente de faturamento brasil",
-    "assistente de controladoria brasil",
+    "auxiliar financeiro remoto brasil",
+    "assistente de faturamento remoto brasil",
+    "assistente de controladoria remoto brasil",
     # Vagas em ingles publicadas no Brasil.
-    "administrative assistant brasil",
-    "operations assistant brasil junior",
+    "administrative assistant remote brasil",
+    "operations assistant remote brasil junior",
     # Aprendiz (porta de entrada).
-    "jovem aprendiz administrativo brasil",
-    "jovem aprendiz brasil",
+    "jovem aprendiz administrativo remoto brasil",
+    "jovem aprendiz remoto brasil",
 ]
 
 SEARCH_QUERIES = [
@@ -104,8 +104,8 @@ RUN_INTERVAL_MINUTES = int(os.getenv("RUN_INTERVAL_MINUTES", "360"))
 # Mantemos True por padrao para evitar enviar vagas que o LinkedIn ja fechou.
 REQUIRE_PLAYWRIGHT_VALIDATION = env_bool("REQUIRE_PLAYWRIGHT_VALIDATION", default=True)
 REQUIRE_APPLY_EVIDENCE = env_bool("REQUIRE_APPLY_EVIDENCE", default=True)
-# Aceita qualquer local no Brasil (remoto, hibrido ou presencial).
-REQUIRE_REMOTE = env_bool("REQUIRE_REMOTE", default=False)
+# Apenas vagas remotas (presencial e hibrido sao descartados).
+REQUIRE_REMOTE = env_bool("REQUIRE_REMOTE", default=True)
 REQUIRE_TARGET_ROLE = env_bool("REQUIRE_TARGET_ROLE", default=True)
 
 # --- Filtro de idade de vagas (dias) ---------------------------

@@ -10,6 +10,7 @@ from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 from bs4 import BeautifulSoup
 
 import config
+from companies import find_remote_company_for_host
 from filters import (
     extract_posted_age_text,
     is_allowed_posted_age,
@@ -47,16 +48,38 @@ LINKEDIN_CANONICAL_URL_RE = re.compile(
 
 
 def job_site_name(url: str) -> str:
-    host = (urlsplit(url or "").netloc or "").lower()
-    for site_name, clause in config.SITES.items():
-        domain = clause.removeprefix("site:").split("/", 1)[0].lower()
-        if domain in host:
+    try:
+        host = urlsplit(url or "").hostname or ""
+    except ValueError:
+        return ""
+    for site_name, domains in config.JOB_BOARD_DOMAINS.items():
+        if host_matches_domains(host, domains):
             return site_name
-    return ""
+    company = find_remote_company_for_host(host, config.REMOTE_COMPANIES_FILE)
+    return company["name"] if company else ""
 
 
 def is_supported_job_url(url: str) -> bool:
-    return bool(job_site_name(url))
+    try:
+        parsed_url = urlsplit(url or "")
+    except ValueError:
+        return False
+    if parsed_url.scheme.lower() not in {"http", "https"} or not parsed_url.hostname:
+        return False
+    if any(
+        host_matches_domains(parsed_url.hostname, domains)
+        for domains in config.JOB_BOARD_DOMAINS.values()
+    ):
+        return True
+    return bool(find_remote_company_for_host(parsed_url.hostname, config.REMOTE_COMPANIES_FILE))
+
+
+def host_matches_domains(host: str, domains: Iterable[str]) -> bool:
+    normalized_host = host.lower().rstrip(".")
+    return any(
+        normalized_host == domain or normalized_host.endswith(f".{domain}")
+        for domain in domains
+    )
 
 
 def normalize_job_url(url: str) -> str:

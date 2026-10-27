@@ -2,7 +2,7 @@
 
 O CSV tem colunas NAME,WEBSITE,REGION e mistura formatos de WEBSITE
 (dominio puro, URL completa, subpath). Este modulo normaliza tudo e
-expoe lookup por nome da empresa + geracao limitada de queries extras.
+expoe lookup por nome da empresa + buscas limitadas aos dominios do CSV.
 """
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from functools import lru_cache
 from pathlib import Path
 from urllib.parse import urlsplit
 
+import config
 from text_utils import normalize_text, normalize_whitespace
 
 log = logging.getLogger(__name__)
@@ -41,7 +42,7 @@ def domain_from_website(website: str) -> str:
     if "://" not in raw:
         raw = "//" + raw
     try:
-        host = (urlsplit(raw).netloc or "").lower()
+        host = (urlsplit(raw).hostname or "").lower()
     except ValueError:
         host = ""
     if not host:
@@ -49,7 +50,7 @@ def domain_from_website(website: str) -> str:
         host = raw.lstrip("/").split("/", 1)[0].lower()
     if host.startswith("www."):
         host = host[4:]
-    return host.strip()
+    return host.rstrip(".").strip()
 
 
 def resolve_csv_path(configured: str = "empresas_remote.csv") -> Path:
@@ -113,23 +114,48 @@ def build_company_queries(
     csv_path: str = "empresas_remote.csv",
     limit: int = 8,
 ) -> list[str]:
-    """Gera no maximo `limit` queries extras, 1 por empresa BR/Latam.
+    """Gera no maximo `limit` buscas, restritas a dominios do CSV.
 
-    Mantem o volume baixo de proposito: cada query custa 1 chamada DDG
-    + validacoes Playwright por resultado.
+    Uma consulta por dominio evita varrer job boards fora da lista de empresas.
     """
     if limit <= 0:
         return []
     companies = load_remote_companies(csv_path).values()
     queries: list[str] = []
+    seen_domains: set[str] = set()
     for company in companies:
         region = normalize_text(company["region"])
         if not any(marker in region for marker in QUERYABLE_REGION_MARKERS):
             continue
-        queries.append(f'"{company["name"]}" auxiliar brasil')
-        if len(queries) >= limit:
+        domain = company["domain"]
+        if not domain or domain in seen_domains:
+            continue
+        seen_domains.add(domain)
+        search_terms = " OR ".join(f'"{stem}"' for stem in config.QUERY_STEMS)
+        queries.append(f"({search_terms}) site:{domain}")
+        if len(queries) == limit:
             break
     return queries
+
+
+def find_remote_company_for_host(
+    host: str,
+    csv_path: str = "empresas_remote.csv",
+) -> dict[str, str] | None:
+    """Busca a empresa do CSV cujo dominio corresponde ao host ou a um subdominio."""
+    normalized_host = (host or "").lower().rstrip(".")
+    if not normalized_host:
+        return None
+    matches = [
+        company
+        for company in load_remote_companies(csv_path).values()
+        if company["domain"]
+        and (
+            normalized_host == company["domain"]
+            or normalized_host.endswith(f".{company['domain']}")
+        )
+    ]
+    return max(matches, key=lambda company: len(company["domain"]), default=None)
 
 
 def clear_cache() -> None:

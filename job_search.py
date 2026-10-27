@@ -25,10 +25,7 @@ def ddg_search() -> list[Job]:
     results: list[Job] = []
     seen_urls: set[str] = set()
 
-    queries = list(config.SEARCH_QUERIES) + build_company_queries(
-        config.REMOTE_COMPANIES_FILE,
-        config.REMOTE_COMPANY_QUERY_LIMIT,
-    )
+    queries = build_search_queries()
     with DDGS() as duckduckgo:
         for query in queries:
             results.extend(search_query_jobs(duckduckgo, query, seen_urls))
@@ -36,6 +33,20 @@ def ddg_search() -> list[Job]:
 
     log.info("🔎  %d vagas únicas encontradas via DDG", len(results))
     return results
+
+
+def build_search_queries() -> list[str]:
+    queries = build_company_queries(
+        config.REMOTE_COMPANIES_FILE,
+        config.REMOTE_COMPANY_QUERY_LIMIT,
+    )
+    search_terms = " OR ".join(f'"{stem}"' for stem in config.QUERY_STEMS)
+    queries.extend(
+        f"({search_terms}) {site_clause}"
+        for site_name in config.JOB_BOARD_SEARCH_SITES
+        for site_clause in config.JOB_BOARD_SEARCH_QUERIES[site_name]
+    )
+    return queries
 
 
 def search_query_jobs(duckduckgo: DDGS, query: str, seen_urls: set[str]) -> list[Job]:

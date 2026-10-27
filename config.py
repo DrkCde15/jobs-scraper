@@ -29,13 +29,14 @@ def parse_email_list(value: str | None) -> list[str]:
 
 
 # --- Busca ---------------------------------------------------
-JOB_ALERT_TITLE = "Vagas Remotas Administrativas, Operacionais e Financeiras"
+JOB_ALERT_TITLE = "Vagas Remotas de Tecnologia para Nível Inicial"
 
-# Sites de vagas varridos (nome -> cláusula de domínio para a busca).
+# Job boards disponíveis para diagnóstico.
 SITES = {
     "linkedin": "site:linkedin.com/jobs/view",
     "indeed": "site:br.indeed.com",
     "infojobs": "site:infojobs.com.br",
+    "glassdoor": "site:glassdoor.com",
     "vagas": "site:vagas.com.br",
     "catho": "site:catho.com.br",
     "programathor": "site:programathor.com.br",
@@ -44,7 +45,22 @@ SITES = {
     "trampos": "site:trampos.co",
 }
 
-# Permite restringir os sites via .env, ex.: ENABLED_SITES=linkedin,indeed,infojobs
+# Portais usados nas buscas de vagas, além dos domínios do CSV.
+JOB_BOARD_SEARCH_SITES = ("linkedin", "indeed", "infojobs", "glassdoor")
+JOB_BOARD_DOMAINS = {
+    "linkedin": ("linkedin.com",),
+    "indeed": ("indeed.com",),
+    "infojobs": ("infojobs.com.br",),
+    "glassdoor": ("glassdoor.com", "glassdoor.com.br"),
+}
+JOB_BOARD_SEARCH_QUERIES = {
+    "linkedin": ("site:linkedin.com/jobs/view",),
+    "indeed": ("site:br.indeed.com",),
+    "infojobs": ("site:infojobs.com.br",),
+    "glassdoor": ("site:glassdoor.com", "site:glassdoor.com.br"),
+}
+
+# Sites verificados pelo comando --check-sites.
 ENABLED_SITES = [
     item.strip()
     for item in os.getenv("ENABLED_SITES", "").split(",")
@@ -52,35 +68,56 @@ ENABLED_SITES = [
 ] or list(SITES)
 
 QUERY_STEMS = [
-    # 1. Assistente administrativo.
-    "assistente administrativo remoto brasil",
-    "auxiliar administrativo remoto brasil",
-    "assistente de operacoes remoto brasil",
-    # 2. Operacoes / back-office.
-    "auxiliar de operacoes remoto brasil",
-    "assistente de cadastro remoto brasil",
-    "analista de operacoes junior remoto brasil",
-    # 3. Assistente de dados / relatorios (ponte admin-dados).
-    "assistente de indicadores remoto brasil",
-    "assistente de relatorios remoto brasil",
-    "auxiliar de bi remoto brasil",
-    # 4. Financeiro.
-    "auxiliar financeiro remoto brasil",
-    "assistente de faturamento remoto brasil",
-    "assistente de controladoria remoto brasil",
-    # Vagas em ingles publicadas no Brasil.
-    "administrative assistant remote brasil",
-    "operations assistant remote brasil junior",
-    # Aprendiz (porta de entrada).
-    "jovem aprendiz administrativo remoto brasil",
-    "jovem aprendiz remoto brasil",
+    "desenvolvedor de software junior remoto brasil",
+    "software developer junior remote brasil",
+    "programador junior remoto brasil",
+    "engenheiro de software junior remoto brasil",
+    "backend developer junior remoto brasil",
+    "back-end developer junior remoto brasil",
+    "desenvolvedor backend junior remoto brasil",
+    "frontend developer junior remoto brasil",
+    "front-end developer junior remoto brasil",
+    "desenvolvedor frontend junior remoto brasil",
+    "full stack developer junior remoto brasil",
+    "desenvolvedor full stack junior remoto brasil",
+    "desenvolvedor web junior remoto brasil",
+    "desenvolvedor mobile junior remoto brasil",
+    "android developer junior remoto brasil",
+    "ios developer junior remoto brasil",
+    "analista de dados junior remoto brasil",
+    "data analyst junior remote brasil",
+    "data engineer junior remoto brasil",
+    "engenheiro de dados junior remoto brasil",
+    "data scientist junior remote brasil",
+    "cientista de dados junior remoto brasil",
+    "analista de business intelligence junior remoto brasil",
+    "bi analyst junior remote brasil",
+    "machine learning junior engineer remote brasil",
+    "qa analyst junior remoto brasil",
+    "analista de testes junior remoto brasil",
+    "software tester junior remote brasil",
+    "qa automation junior remote brasil",
+    "test automation engineer junior remote brasil",
+    "sdet junior remote brasil",
+    "analista de qualidade de software junior remoto brasil",
+    "analista de seguranca da informacao junior remoto brasil",
+    "cybersecurity analyst junior remote brasil",
+    "information security analyst junior remote brasil",
+    "soc analyst junior remote brasil",
+    "devops engineer junior remoto brasil",
+    "cloud engineer junior remoto brasil",
+    "site reliability engineer junior remote brasil",
+    "platform engineer junior remote brasil",
+    "analista de infraestrutura junior remoto brasil",
+    "database administrator junior remote brasil",
+    "database analyst junior remoto brasil",
+    "analista de sistemas junior remoto brasil",
+    "analista de ti junior remoto brasil",
+    "technical support analyst junior remote brasil",
+    "suporte tecnico de ti junior remoto brasil",
+    "help desk analyst junior remote brasil",
 ]
 
-SEARCH_QUERIES = [
-    f"{stem} {SITES[site_name]}"
-    for site_name in ENABLED_SITES
-    for stem in QUERY_STEMS
-]
 MAX_RESULTS_PER_QUERY = 20
 
 # --- E-mail de envio ----------------------------------------
@@ -109,7 +146,7 @@ REQUIRE_REMOTE = env_bool("REQUIRE_REMOTE", default=True)
 REQUIRE_TARGET_ROLE = env_bool("REQUIRE_TARGET_ROLE", default=True)
 
 # --- Filtro de idade de vagas (dias) ---------------------------
-MAX_JOB_AGE_DAYS = int(os.getenv("MAX_JOB_AGE_DAYS", "7"))
+MAX_JOB_AGE_DAYS = int(os.getenv("MAX_JOB_AGE_DAYS", "180"))
 REQUIRE_POSTED_AGE = env_bool("REQUIRE_POSTED_AGE", default=True)
 
 # --- Arquivos de estado -------------------------------------

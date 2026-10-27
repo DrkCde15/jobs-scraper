@@ -258,41 +258,94 @@ PLENO_MARKERS = {
 }
 
 TARGET_ROLE_MARKERS = {
-    # 1. Assistente administrativo.
-    "assistente administrativo",
-    "assistente administrativa",
-    "auxiliar administrativo",
-    "auxiliar administrativa",
-    "assistente de operacoes",
-    "auxiliar de operacoes",
-    # 2. Operacoes / back-office.
-    "assistente de cadastro",
-    "auxiliar de cadastro",
-    "analista de operacoes",
-    "administrative assistant",
-    "operations assistant",
-    "office assistant",
-    "back office",
-    "backoffice",
-    "back-office",
-    # 3. Assistente de dados / relatorios.
-    "assistente de indicadores",
-    "auxiliar de indicadores",
-    "assistente de relatorios",
-    "auxiliar de relatorios",
-    "assistente de bi",
-    "auxiliar de bi",
-    # 4. Financeiro.
-    "auxiliar financeiro",
-    "assistente financeiro",
-    "auxiliar de faturamento",
-    "assistente de faturamento",
-    "auxiliar de controladoria",
-    "assistente de controladoria",
-    "auxiliar contabil",
-    "assistente contabil",
-    # Aprendiz (porta de entrada, qualquer area).
-    *APRENDIZ_MARKERS,
+    # Desenvolvimento de software, web e mobile.
+    "desenvolvedor",
+    "desenvolvedora",
+    "developer",
+    "software engineer",
+    "engenheiro de software",
+    "programador",
+    "programmer",
+    "backend",
+    "back-end",
+    "front end",
+    "frontend",
+    "front-end",
+    "full stack",
+    "fullstack",
+    "web developer",
+    "mobile developer",
+    "android developer",
+    "ios developer",
+    "application developer",
+    "software development",
+    # Dados, analytics, BI e inteligência artificial.
+    "analista de dados",
+    "data analyst",
+    "data engineer",
+    "engenheiro de dados",
+    "cientista de dados",
+    "data scientist",
+    "business intelligence",
+    "bi analyst",
+    "analytics engineer",
+    "machine learning",
+    "artificial intelligence",
+    "inteligencia artificial",
+    "cientista de machine learning",
+    # Qualidade de software e testes.
+    "qa analyst",
+    "qa engineer",
+    "qa automation",
+    "quality assurance",
+    "analista de testes",
+    "test analyst",
+    "software tester",
+    "test engineer",
+    "test automation",
+    "automacao de testes",
+    "sdet",
+    "qualidade de software",
+    # Segurança da informação e cibersegurança.
+    "seguranca da informacao",
+    "information security",
+    "cybersecurity",
+    "cyber security",
+    "ciberseguranca",
+    "security analyst",
+    "security engineer",
+    "soc analyst",
+    "application security",
+    "pentest",
+    "penetration tester",
+    # Infraestrutura, cloud, DevOps e confiabilidade.
+    "devops",
+    "cloud engineer",
+    "engenheiro cloud",
+    "site reliability",
+    "sre",
+    "platform engineer",
+    "infrastructure engineer",
+    "analista de infraestrutura",
+    "network engineer",
+    "engenheiro de redes",
+    "sysadmin",
+    "system administrator",
+    "administrador de sistemas",
+    # Sistemas, bancos de dados e suporte de TI.
+    "analista de sistemas",
+    "systems analyst",
+    "analista de ti",
+    "it analyst",
+    "database administrator",
+    "database analyst",
+    "database engineer",
+    "dba",
+    "technical support",
+    "suporte tecnico",
+    "it support",
+    "help desk",
+    "service desk",
 }
 
 ROLE_BLOCKLIST = {
@@ -307,8 +360,6 @@ ROLE_BLOCKLIST = {
     "customer success",
     "sucesso do cliente",
     "atendimento",
-    "suporte",
-    "support",
     "designer",
     "product manager",
     "produto",
@@ -353,8 +404,8 @@ AGE_UNIT_DAYS = [
     (("mes", "meses", "month", "months"), 30),
     (("semana", "semanas", "week", "weeks"), 7),
     (("dia", "dias", "day", "days"), 1),
-    (("hora", "horas", "hour", "hours"), 1),
-    (("minuto", "minutos", "minute", "minutes"), 1),
+    (("hora", "horas", "hour", "hours"), 1 / 24),
+    (("minuto", "minutos", "minute", "minutes"), 1 / 1440),
 ]
 
 EXPERIENCE_BLOCK_RE = re.compile(
@@ -381,7 +432,7 @@ def extract_posted_age_text(text: str) -> str:
     return ""
 
 
-def parse_job_age_to_days(age_text: str) -> int | None:
+def parse_job_age_to_days(age_text: str) -> float | None:
     if not age_text:
         return None
 

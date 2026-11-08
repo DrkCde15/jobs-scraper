@@ -46,18 +46,33 @@ SITES = {
 }
 
 # Portais usados nas buscas de vagas, além dos domínios do CSV.
-JOB_BOARD_SEARCH_SITES = ("linkedin", "indeed", "infojobs", "glassdoor")
+# Inclui os boards brasileiros do SITES: medido em producao, as buscas que
+# funcionavam traziam majoritariamente vaga estrangeira ou encerrada do
+# LinkedIn, e nenhum candidato passava nos filtros.
+JOB_BOARD_SEARCH_SITES = tuple(SITES)
 JOB_BOARD_DOMAINS = {
     "linkedin": ("linkedin.com",),
     "indeed": ("indeed.com",),
     "infojobs": ("infojobs.com.br",),
     "glassdoor": ("glassdoor.com", "glassdoor.com.br"),
+    "vagas": ("vagas.com.br",),
+    "catho": ("catho.com.br",),
+    "programathor": ("programathor.com.br",),
+    "geekhunter": ("geekhunter.com.br",),
+    "gupy": ("gupy.io",),
+    "trampos": ("trampos.co",),
 }
 JOB_BOARD_SEARCH_QUERIES = {
     "linkedin": ("site:linkedin.com/jobs/view",),
     "indeed": ("site:br.indeed.com",),
     "infojobs": ("site:infojobs.com.br",),
     "glassdoor": ("site:glassdoor.com", "site:glassdoor.com.br"),
+    "vagas": ("site:vagas.com.br",),
+    "catho": ("site:catho.com.br",),
+    "programathor": ("site:programathor.com.br",),
+    "geekhunter": ("site:geekhunter.com.br",),
+    "gupy": ("site:gupy.io",),
+    "trampos": ("site:trampos.co",),
 }
 
 # Sites verificados pelo comando --check-sites.

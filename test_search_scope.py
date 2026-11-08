@@ -92,12 +92,18 @@ class CsvSearchScopeTests(unittest.TestCase):
             "https://br.indeed.com/viewjob?jk=abc",
             "https://www.infojobs.com.br/vaga-developer.aspx",
             "https://www.glassdoor.com.br/Vaga/desenvolvedor-vagas",
+            "https://portal.gupy.io/job/123",
+            "https://www.vagas.com.br/vaga-de-dev-jr/1",
+            "https://www.catho.com.br/vaga/1",
+            "https://programathor.com.br/jobs/1",
+            "https://jobs.geekhunter.com.br/vaga/1",
+            "https://trampos.co/oportunidades/1",
         )
         for url in accepted:
             with self.subTest(url=url):
                 self.assertTrue(is_supported_job_url(url))
 
-        self.assertFalse(is_supported_job_url("https://www.gupy.io/jobs/123"))
+        self.assertFalse(is_supported_job_url("https://www.monster.com/jobs/1"))
         self.assertFalse(is_supported_job_url("https://linkedin.com.attacker.test/jobs/1"))
         self.assertEqual(job_site_name(accepted[0]), "linkedin")
 

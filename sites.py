@@ -81,7 +81,8 @@ def is_supported_job_url(url: str) -> bool:
 # individual. Medido em producao, eram a maioria dos resultados.
 LISTING_URL_PATTERNS = (
     re.compile(r"indeed\.com/q-", re.IGNORECASE),
-    re.compile(r"infojobs\.com\.br/vagas-de-emprego-", re.IGNORECASE),
+    re.compile(r"infojobs\.com\.br/(?:vaga|vagas)-de-", re.IGNORECASE),
+    re.compile(r"glassdoor\.[^/]+/Salary/", re.IGNORECASE),
     re.compile(r"SRCH_", re.IGNORECASE),
 )
 

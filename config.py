@@ -101,7 +101,12 @@ RUN_INTERVAL_MINUTES = int(os.getenv("RUN_INTERVAL_MINUTES", "360"))
 # --- Validacao de disponibilidade ---------------------------
 # Mantemos True por padrao para evitar enviar vagas que o LinkedIn ja fechou.
 REQUIRE_PLAYWRIGHT_VALIDATION = env_bool("REQUIRE_PLAYWRIGHT_VALIDATION", default=True)
-REQUIRE_APPLY_EVIDENCE = env_bool("REQUIRE_APPLY_EVIDENCE", default=True)
+# Desligado por padrao: sem login o LinkedIn troca o botao de candidatura por
+# um link de "Entrar", entao toda vaga aberta era lida como encerrada (medido
+# em producao, bloqueou ate vaga de Brasilia). Quem quiser a checagem de volta
+# pode ligar por env, sabendo que ela so e confiavel com sessao autenticada.
+# A deteccao de vaga fechada continua ativa pelo texto da propria pagina.
+REQUIRE_APPLY_EVIDENCE = env_bool("REQUIRE_APPLY_EVIDENCE", default=False)
 # Apenas vagas remotas (presencial e hibrido sao descartados).
 REQUIRE_REMOTE = env_bool("REQUIRE_REMOTE", default=True)
 REQUIRE_TARGET_ROLE = env_bool("REQUIRE_TARGET_ROLE", default=True)

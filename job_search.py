@@ -64,7 +64,14 @@ def build_search_queries() -> list[str]:
 def search_query_jobs(duckduckgo: DDGS, query: str, seen_urls: set[str]) -> list[Job]:
     log.info("🔍  Buscando: %s", query)
     try:
-        hits = list(duckduckgo.text(query, max_results=config.MAX_RESULTS_PER_QUERY) or [])
+        hits = list(
+            duckduckgo.text(
+                query,
+                backend=config.SEARCH_BACKEND,
+                max_results=config.MAX_RESULTS_PER_QUERY,
+            )
+            or []
+        )
     except Exception as exc:
         log.warning("Erro na busca DDG ('%s'): %s", query, exc)
         return []

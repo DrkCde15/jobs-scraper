@@ -5,6 +5,7 @@ from unittest import mock
 
 import companies
 import config
+import job_search
 from job_search import build_search_queries
 from sites import is_supported_job_url, job_site_name
 
@@ -77,6 +78,20 @@ class CsvSearchScopeTests(unittest.TestCase):
         )
         board_queries, _ = self.board_queries_and_company_queries()
         self.assertEqual(len(board_queries), expected_board_queries)
+
+    def test_search_query_passes_the_configured_backend(self):
+        # O padrao do ddgs dispara ~8 requisicoes por query em motores que
+        # nao funcionam no runner (brave 429, mojeek 403, typeahead sem
+        # vaga). Sem o backend configurado a rodada volta a estourar o
+        # rate limit com requisicoes que nao trazem resultado nenhum.
+        engine = mock.Mock()
+        engine.text.return_value = []
+
+        job_search.search_query_jobs(engine, '("dev junior") site:linkedin.com/jobs/view', set())
+
+        engine.text.assert_called_once()
+        self.assertEqual(engine.text.call_args.kwargs["backend"], config.SEARCH_BACKEND)
+        self.assertEqual(engine.text.call_args.kwargs["max_results"], config.MAX_RESULTS_PER_QUERY)
 
     def test_csv_hosts_accept_domains_and_subdomains_only(self):
         self.assertTrue(is_supported_job_url("https://careers.latam.example/jobs/1"))

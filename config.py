@@ -103,6 +103,16 @@ QUERY_STEMS = [
 
 MAX_RESULTS_PER_QUERY = 20
 
+# Backends de busca do ddgs. O padrao do ddgs ("auto") dispara ~8 requisicoes
+# por query em 7 motores, e medido em producao (2026-11-08) no runner do
+# Actions so o Yahoo devolvia pagina de busca real:
+#   brave 429 e mojeek 403 em 100% das chamadas, startpage captcha-block,
+#   wikipedia e grokipedia sao typeahead de 1 resultado (nunca devolvem vaga),
+#   html.duckduckgo.com 202 em todas.
+# Com "yahoo" a rodada faz 1 requisicao por query em vez de 8, o que reduz a
+# pressao de rate limit sem perder nenhum resultado observado.
+SEARCH_BACKEND = os.getenv("SEARCH_BACKEND", "yahoo")
+
 # --- E-mail de envio ----------------------------------------
 SMTP_HOST = os.getenv("EMAIL_SMTP_HOST") or os.getenv("SMTP_HOST") or "smtp.gmail.com"
 SMTP_PORT = int(os.getenv("EMAIL_SMTP_PORT") or os.getenv("SMTP_PORT") or "587")

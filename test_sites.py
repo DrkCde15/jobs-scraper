@@ -162,12 +162,25 @@ class ListingUrlTests(unittest.TestCase):
             "https://www.infojobs.com.br/vagas-de-emprego-x.aspx",
             "https://www.glassdoor.com/Salary/x-Salaries-E1.htm",
             "https://www.glassdoor.com.br/Vaga/x-SRCH_KO0,16.htm",
+            "https://www.vagas.com.br/vagas-de-desenvolvedor-junior",
+            "https://portal.gupy.io/job-search/term=Desenvolvedor+j%C3%BAnior",
+            "https://programathor.com.br/jobs-city/remoto",
+            "https://programathor.com.br/jobs-front-end/remoto",
+            "https://trampos.co/oportunidades/",
+            "https://trampos.co/oportunidades/?pagina=2",
         )
         job_pages = (
             "https://br.indeed.com/viewjob?jk=abc",
             "https://www.infojobs.com.br/vaga-developer.aspx",
             "https://www.linkedin.com/jobs/view/4459953962",
             "https://www.vagas.com.br/vaga-de-dev-junior-123456",
+            "https://api.vagas.com.br/vagas/v2635366/pessoa-desenvolvedora-net-junior",
+            "https://nossasvagas.vagas.com.br/vagas/v2795460/11141-desenvolvedor-a-full-stack-junior",
+            "https://localiza.gupy.io/jobs/11499926?jobBoardSource=gupy_public_page",
+            "https://programathor.com.br/jobs/4478-desenvolvedor-junior-remoto",
+            "https://trampos.co/oportunidades/774739",
+            "https://www.catho.com.br/vagas/desenvolvedora-java-jr-remoto/",
+            "https://www.geekhunter.com.br/vaga/desenvolvedor-a-backend-jr-pl-automacao-e-ia",
         )
         for url in listings:
             with self.subTest(url=url):

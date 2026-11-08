@@ -79,11 +79,19 @@ def is_supported_job_url(url: str) -> bool:
 # Paginas de listagem e de pesquisa dos job boards: carregam o dominio do
 # board, entao passariam no filtro por host, mas nao apontam para uma vaga
 # individual. Medido em producao, eram a maioria dos resultados.
+#
+# As 4 ultimas vieram do mapeamento real das buscas nos boards brasileiros
+# (2026-11-08): o site: deles devolve principalmente pagina de pesquisa,
+# enquanto a vaga individual fica em /vaga-de-... ou /jobs/<id>-... .
 LISTING_URL_PATTERNS = (
     re.compile(r"indeed\.com/q-", re.IGNORECASE),
     re.compile(r"infojobs\.com\.br/(?:vaga|vagas)-de-", re.IGNORECASE),
     re.compile(r"glassdoor\.[^/]+/Salary/", re.IGNORECASE),
     re.compile(r"SRCH_", re.IGNORECASE),
+    re.compile(r"vagas\.com\.br/vagas-de-", re.IGNORECASE),
+    re.compile(r"gupy\.io/job-search/", re.IGNORECASE),
+    re.compile(r"programathor\.com\.br/jobs-", re.IGNORECASE),
+    re.compile(r"trampos\.co/oportunidades/?(?:[?#]|$)", re.IGNORECASE),
 )
 
 

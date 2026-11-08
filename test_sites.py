@@ -73,6 +73,62 @@ class ClosedJobDetectionTests(unittest.TestCase):
             self.assertTrue(sites.is_closed_linkedin_job_page(snapshot))
 
 
+class LoginWallDetectionTests(unittest.TestCase):
+    def test_password_widget_alone_is_not_a_login_wall(self):
+        # O widget de login do cabecalho esta no DOM de toda vaga. Se ele
+        # contasse como muralha, toda pagina boa forcaria um reload a toa.
+        snapshot = build_snapshot(
+            OPEN_JOB_HTML + "<input type='password' name='session_password'>",
+            title="Desenvolvedor Junior Python | LinkedIn Jobs",
+        )
+        self.assertFalse(sites.is_linkedin_login_wall(snapshot))
+
+    def test_auth_title_is_a_login_wall(self):
+        snapshot = build_snapshot("<p>Sem conteudo de vaga.</p>", title="LinkedIn: entre ou cadastre-se")
+        self.assertTrue(sites.is_linkedin_login_wall(snapshot))
+
+    def test_signup_title_is_a_login_wall(self):
+        snapshot = build_snapshot("<p>Sem conteudo de vaga.</p>", title="Cadastre-se | LinkedIn")
+        self.assertTrue(sites.is_linkedin_login_wall(snapshot))
+
+    def test_job_page_is_not_a_login_wall(self):
+        snapshot = build_snapshot(
+            OPEN_JOB_HTML,
+            title="Desenvolvedor Junior Python | LinkedIn Jobs",
+        )
+        self.assertFalse(sites.is_linkedin_login_wall(snapshot))
+
+    def test_retry_skipped_when_job_is_closed(self):
+        snapshot = build_snapshot(
+            CLOSED_JOB_HTML,
+            title="Desenvolvedor Junior Python | LinkedIn Jobs",
+        )
+        with mock.patch.object(config, "REQUIRE_APPLY_EVIDENCE", False):
+            self.assertFalse(sites.needs_linkedin_retry(snapshot))
+
+    def test_retry_runs_when_open_job_has_no_posted_age(self):
+        snapshot = build_snapshot(
+            OPEN_JOB_HTML,
+            title="Desenvolvedor Junior Python | LinkedIn Jobs",
+        )
+        with (
+            mock.patch.object(config, "REQUIRE_APPLY_EVIDENCE", False),
+            mock.patch.object(config, "REQUIRE_POSTED_AGE", True),
+        ):
+            self.assertTrue(sites.needs_linkedin_retry(snapshot))
+
+    def test_no_retry_when_open_job_has_posted_age(self):
+        snapshot = build_snapshot(
+            OPEN_JOB_HTML + "<p>Há 3 dias</p>",
+            title="Desenvolvedor Junior Python | LinkedIn Jobs",
+        )
+        with (
+            mock.patch.object(config, "REQUIRE_APPLY_EVIDENCE", False),
+            mock.patch.object(config, "REQUIRE_POSTED_AGE", True),
+        ):
+            self.assertFalse(sites.needs_linkedin_retry(snapshot))
+
+
 class ListingUrlTests(unittest.TestCase):
     def test_search_and_listing_pages_are_rejected(self):
         urls = (

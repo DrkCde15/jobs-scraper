@@ -336,8 +336,7 @@ LOCATION_SELECTORS = [
 
 
 def enrich_linkedin_job(page: Any, job: Job) -> Job:
-    open_linkedin_page(page, job["url"])
-    snapshot = capture_page_snapshot(page)
+    snapshot = load_linkedin_job_snapshot(page, job["url"])
     if is_closed_linkedin_job_page(snapshot):
         raise JobRejected("vaga encerrada ou indisponivel")
 
@@ -353,6 +352,45 @@ def enrich_linkedin_job(page: Any, job: Job) -> Job:
     )
     log.debug("[OK] %s @ %s", details.title, details.company)
     return merge_linkedin_job_details(job, details)
+
+
+def load_linkedin_job_snapshot(page: Any, url: str) -> dict[str, Any]:
+    open_linkedin_page(page, url)
+    snapshot = capture_page_snapshot(page, url)
+    if not needs_linkedin_retry(snapshot):
+        return snapshot
+
+    # O LinkedIn serve a mesma URL de forma inconsistente para quem nao esta
+    # logado: as vezes a pagina de login, as vezes uma renderizacao parcial sem
+    # o top card. Nos dois casos a vaga boa morreria no filtro de idade.
+    log.debug("Renderizacao incompleta em %s; recarregando", url)
+    open_linkedin_page(page, url)
+    return capture_page_snapshot(page, url)
+
+
+def needs_linkedin_retry(snapshot: dict[str, Any]) -> bool:
+    if is_linkedin_login_wall(snapshot):
+        return True
+    if is_closed_linkedin_job_page(snapshot):
+        return False
+    if not config.REQUIRE_POSTED_AGE:
+        return False
+    return not extract_posted_age_text(snapshot["full_text"])
+
+
+def is_linkedin_login_wall(snapshot: dict[str, Any]) -> bool:
+    # Atencao: nao usar input[type=password] como sinal. O widget de login do
+    # cabecalho esta no DOM de toda vaga, e ele marcava pagina boa como muralha.
+    normalized_title = normalize_text(snapshot.get("title") or "")
+    return any(marker in normalized_title for marker in LOGIN_WALL_TITLE_MARKERS)
+
+
+LOGIN_WALL_TITLE_MARKERS = (
+    "entre ou cadastre-se",
+    "cadastre-se | linkedin",
+    "sign in | linkedin",
+    "join linkedin",
+)
 
 
 def open_linkedin_page(page: Any, url: str) -> None:

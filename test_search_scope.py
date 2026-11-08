@@ -68,6 +68,16 @@ class CsvSearchScopeTests(unittest.TestCase):
             with self.subTest(query=query[:60]):
                 self.assertLessEqual(len(query), 200)
 
+    def test_board_searches_are_not_split_into_extra_queries(self):
+        # Fatiar os termos em lotes dobrou as buscas (12 -> 22) e derrubou o
+        # volume de resultados (32 -> 18): cada fatia fica estreita e ainda
+        # gasta mais cota de rate limit. Um board = uma consulta.
+        expected_board_queries = sum(
+            len(clauses) for clauses in config.JOB_BOARD_SEARCH_QUERIES.values()
+        )
+        board_queries, _ = self.board_queries_and_company_queries()
+        self.assertEqual(len(board_queries), expected_board_queries)
+
     def test_csv_hosts_accept_domains_and_subdomains_only(self):
         self.assertTrue(is_supported_job_url("https://careers.latam.example/jobs/1"))
         self.assertTrue(is_supported_job_url("https://jobs.careers.latam.example/jobs/1"))

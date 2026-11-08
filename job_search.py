@@ -22,6 +22,11 @@ DEFAULT_SEARCH_TITLE = "Vaga"
 # devolver erro de limite de taxa no meio da rodada.
 QUERY_DELAY_SECONDS = 1.0
 
+# Termos por consulta. Junta-los todos numa unica string deixa a busca com
+# centenas de caracteres e os motores devolvem erro; fatiar em lotes curtos
+# mantem cada consulta simples e ainda amplia o volume de candidatos.
+QUERY_STEM_BATCH_SIZE = 2
+
 
 def ddg_search() -> list[Job]:
     results: list[Job] = []
@@ -37,13 +42,22 @@ def ddg_search() -> list[Job]:
     return results
 
 
+def stem_query_terms() -> list[str]:
+    stems = config.QUERY_STEMS
+    size = max(1, QUERY_STEM_BATCH_SIZE)
+    return [
+        " OR ".join(f'"{stem}"' for stem in stems[index : index + size])
+        for index in range(0, len(stems), size)
+    ]
+
+
 def build_search_queries() -> list[str]:
     # Job boards primeiro: saem onde as vagas realmente estao. Os dominios do
     # CSV vem por ultimo, entao uma busca institucional que nao retorna nada
     # nao consome a busca util antes dela.
-    search_terms = " OR ".join(f'"{stem}"' for stem in config.QUERY_STEMS)
     queries = [
         f"({search_terms}) {site_clause}"
+        for search_terms in stem_query_terms()
         for site_name in config.JOB_BOARD_SEARCH_SITES
         for site_clause in config.JOB_BOARD_SEARCH_QUERIES[site_name]
     ]

@@ -66,12 +66,28 @@ def is_supported_job_url(url: str) -> bool:
         return False
     if parsed_url.scheme.lower() not in {"http", "https"} or not parsed_url.hostname:
         return False
+    if is_listing_url(url):
+        return False
     if any(
         host_matches_domains(parsed_url.hostname, domains)
         for domains in config.JOB_BOARD_DOMAINS.values()
     ):
         return True
     return bool(find_remote_company_for_host(parsed_url.hostname, config.REMOTE_COMPANIES_FILE))
+
+
+# Paginas de listagem e de pesquisa dos job boards: carregam o dominio do
+# board, entao passariam no filtro por host, mas nao apontam para uma vaga
+# individual. Medido em producao, eram a maioria dos resultados.
+LISTING_URL_PATTERNS = (
+    re.compile(r"indeed\.com/q-", re.IGNORECASE),
+    re.compile(r"infojobs\.com\.br/vagas-de-emprego-", re.IGNORECASE),
+    re.compile(r"SRCH_", re.IGNORECASE),
+)
+
+
+def is_listing_url(url: str) -> bool:
+    return any(pattern.search(url or "") for pattern in LISTING_URL_PATTERNS)
 
 
 def host_matches_domains(host: str, domains: Iterable[str]) -> bool:

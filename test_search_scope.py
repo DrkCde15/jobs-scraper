@@ -37,15 +37,17 @@ class CsvSearchScopeTests(unittest.TestCase):
         self.assertIn("site:brazil.example", queries[1])
         self.assertTrue(all("site:linkedin.com" not in query for query in queries))
 
-    def test_search_queries_include_the_requested_job_boards(self):
+    def board_queries_and_company_queries(self):
         queries = build_search_queries()
-        board_count = sum(
-            len(config.JOB_BOARD_SEARCH_QUERIES[site_name])
-            for site_name in config.JOB_BOARD_SEARCH_SITES
+        company_queries = companies.build_company_queries(
+            config.REMOTE_COMPANIES_FILE, config.REMOTE_COMPANY_QUERY_LIMIT
         )
-        board_queries = queries[:board_count]
+        return queries[: len(queries) - len(company_queries)], company_queries
 
-        self.assertEqual(len(board_queries), board_count)
+    def test_search_queries_include_the_requested_job_boards(self):
+        board_queries, _ = self.board_queries_and_company_queries()
+
+        self.assertTrue(board_queries)
         for site_name in config.JOB_BOARD_SEARCH_SITES:
             with self.subTest(site=site_name):
                 for clause in config.JOB_BOARD_SEARCH_QUERIES[site_name]:
@@ -53,19 +55,18 @@ class CsvSearchScopeTests(unittest.TestCase):
 
     def test_job_board_queries_come_before_csv_company_queries(self):
         queries = build_search_queries()
-        board_count = sum(
-            len(config.JOB_BOARD_SEARCH_QUERIES[site_name])
-            for site_name in config.JOB_BOARD_SEARCH_SITES
-        )
-        company_queries = companies.build_company_queries(
-            config.REMOTE_COMPANIES_FILE, config.REMOTE_COMPANY_QUERY_LIMIT
-        )
+        _, company_queries = self.board_queries_and_company_queries()
+        board_count = len(queries) - len(company_queries)
 
         self.assertTrue(company_queries)
-        self.assertEqual(
-            queries[board_count : board_count + len(company_queries)],
-            company_queries,
-        )
+        self.assertEqual(queries[board_count:], company_queries)
+
+    def test_search_queries_stay_short_enough_for_search_engines(self):
+        # Regressao do bug original: 40 termos em OR viravam uma consulta de
+        # ~1800 caracteres e os motores devolviam erro em vez de resultados.
+        for query in build_search_queries():
+            with self.subTest(query=query[:60]):
+                self.assertLessEqual(len(query), 200)
 
     def test_csv_hosts_accept_domains_and_subdomains_only(self):
         self.assertTrue(is_supported_job_url("https://careers.latam.example/jobs/1"))
@@ -89,6 +90,17 @@ class CsvSearchScopeTests(unittest.TestCase):
         self.assertFalse(is_supported_job_url("https://www.gupy.io/jobs/123"))
         self.assertFalse(is_supported_job_url("https://linkedin.com.attacker.test/jobs/1"))
         self.assertEqual(job_site_name(accepted[0]), "linkedin")
+
+    def test_listing_pages_are_rejected_even_on_allowed_boards(self):
+        listings = (
+            "https://br.indeed.com/q-desenvolvedor-junior-full-stack-vagas.html",
+            "https://www.infojobs.com.br/vagas-de-emprego-desenvolvedor+junior.aspx",
+            "https://www.glassdoor.com/Job/junior-backend-developer-jobs-SRCH_KO0,24.htm",
+            "https://www.glassdoor.com.br/Vaga/desenvolvedor-jr-vagas-SRCH_KO0,16.htm",
+        )
+        for url in listings:
+            with self.subTest(url=url):
+                self.assertFalse(is_supported_job_url(url))
 
 
 if __name__ == "__main__":

@@ -145,13 +145,36 @@ class ListingUrlTests(unittest.TestCase):
     def test_individual_job_pages_still_pass(self):
         urls = (
             "https://www.linkedin.com/jobs/view/4459953962",
-            "https://br.indeed.com/viewjob?jk=abc123",
             "https://empregos.pandape.infojobs.com.br/Detail/2755329",
             "https://www.infojobs.com.br/vaga-developer.aspx",
+            "https://www.vagas.com.br/vaga-de-desenvolvedor-junior-remoto/123456",
+            "https://portal.gupy.io/job/123456",
         )
         for url in urls:
             with self.subTest(url=url):
                 self.assertTrue(sites.is_supported_job_url(url))
+
+    def test_listing_url_pattern_matches_listing_pages_only(self):
+        # independentemente do escopo dos boards: as regexes de listagem
+        # continuam cobrindo indeed e glassdoor caso voltem as buscas.
+        listings = (
+            "https://br.indeed.com/q-desenvolvedor-junior-vagas.html",
+            "https://www.infojobs.com.br/vagas-de-emprego-x.aspx",
+            "https://www.glassdoor.com/Salary/x-Salaries-E1.htm",
+            "https://www.glassdoor.com.br/Vaga/x-SRCH_KO0,16.htm",
+        )
+        job_pages = (
+            "https://br.indeed.com/viewjob?jk=abc",
+            "https://www.infojobs.com.br/vaga-developer.aspx",
+            "https://www.linkedin.com/jobs/view/4459953962",
+            "https://www.vagas.com.br/vaga-de-dev-junior-123456",
+        )
+        for url in listings:
+            with self.subTest(url=url):
+                self.assertTrue(sites.is_listing_url(url))
+        for url in job_pages:
+            with self.subTest(url=url):
+                self.assertFalse(sites.is_listing_url(url))
 
 
 if __name__ == "__main__":

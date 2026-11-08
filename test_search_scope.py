@@ -89,9 +89,7 @@ class CsvSearchScopeTests(unittest.TestCase):
     def test_requested_job_boards_are_accepted_but_other_boards_are_not(self):
         accepted = (
             "https://www.linkedin.com/jobs/view/123",
-            "https://br.indeed.com/viewjob?jk=abc",
             "https://www.infojobs.com.br/vaga-developer.aspx",
-            "https://www.glassdoor.com.br/Vaga/desenvolvedor-vagas",
             "https://portal.gupy.io/job/123",
             "https://www.vagas.com.br/vaga-de-dev-jr/1",
             "https://www.catho.com.br/vaga/1",
@@ -103,14 +101,24 @@ class CsvSearchScopeTests(unittest.TestCase):
             with self.subTest(url=url):
                 self.assertTrue(is_supported_job_url(url))
 
-        self.assertFalse(is_supported_job_url("https://www.monster.com/jobs/1"))
-        self.assertFalse(is_supported_job_url("https://linkedin.com.attacker.test/jobs/1"))
+        # Fora de escopo: renderizavam quase nada (indeed 0 em 9 queries,
+        # glassdoor 1 em 6) e cada busca custa cota de rate limit.
+        rejected = (
+            "https://br.indeed.com/viewjob?jk=abc",
+            "https://www.glassdoor.com.br/Vaga/desenvolvedor-vagas",
+            "https://www.monster.com/jobs/1",
+            "https://linkedin.com.attacker.test/jobs/1",
+        )
+        for url in rejected:
+            with self.subTest(url=url):
+                self.assertFalse(is_supported_job_url(url))
+
         self.assertEqual(job_site_name(accepted[0]), "linkedin")
 
     def test_listing_pages_are_rejected_even_on_allowed_boards(self):
         listings = (
-            "https://br.indeed.com/q-desenvolvedor-junior-full-stack-vagas.html",
             "https://www.infojobs.com.br/vagas-de-emprego-desenvolvedor+junior.aspx",
+            "https://br.indeed.com/q-desenvolvedor-junior-full-stack-vagas.html",
             "https://www.glassdoor.com/Job/junior-backend-developer-jobs-SRCH_KO0,24.htm",
             "https://www.glassdoor.com.br/Vaga/desenvolvedor-jr-vagas-SRCH_KO0,16.htm",
         )

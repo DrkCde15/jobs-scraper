@@ -46,15 +46,24 @@ SITES = {
 }
 
 # Portais usados nas buscas de vagas, além dos domínios do CSV.
-# Inclui os boards brasileiros do SITES: medido em producao, as buscas que
-# funcionavam traziam majoritariamente vaga estrangeira ou encerrada do
-# LinkedIn, e nenhum candidato passava nos filtros.
-JOB_BOARD_SEARCH_SITES = tuple(SITES)
+# Medido em producao (2026-11-08, 2 rodadas com busca ok):
+#   linkedin 26 resultados em 6 queries, infojobs 7 em 6;
+#   indeed 0 em 9, glassdoor 1 em 6, e o CSV 1 em 14.
+# Por isso indeed e glassdoor sao de fora, e o CSV usa poucas queries.
+# Os boards brasileiros do SITES entram para dar oferta local.
+JOB_BOARD_SEARCH_SITES = (
+    "linkedin",
+    "infojobs",
+    "vagas",
+    "catho",
+    "programathor",
+    "geekhunter",
+    "gupy",
+    "trampos",
+)
 JOB_BOARD_DOMAINS = {
     "linkedin": ("linkedin.com",),
-    "indeed": ("indeed.com",),
     "infojobs": ("infojobs.com.br",),
-    "glassdoor": ("glassdoor.com", "glassdoor.com.br"),
     "vagas": ("vagas.com.br",),
     "catho": ("catho.com.br",),
     "programathor": ("programathor.com.br",),
@@ -64,9 +73,7 @@ JOB_BOARD_DOMAINS = {
 }
 JOB_BOARD_SEARCH_QUERIES = {
     "linkedin": ("site:linkedin.com/jobs/view",),
-    "indeed": ("site:br.indeed.com",),
     "infojobs": ("site:infojobs.com.br",),
-    "glassdoor": ("site:glassdoor.com", "site:glassdoor.com.br"),
     "vagas": ("site:vagas.com.br",),
     "catho": ("site:catho.com.br",),
     "programathor": ("site:programathor.com.br",),
@@ -136,4 +143,7 @@ LOG_FILE = "scraper.log"
 
 # --- Empresas remote-friendly -------------------------------
 REMOTE_COMPANIES_FILE = os.getenv("REMOTE_COMPANIES_FILE", "empresas_remote.csv")
-REMOTE_COMPANY_QUERY_LIMIT = int(os.getenv("REMOTE_COMPANY_QUERY_LIMIT", "8"))
+# Medido em producao: 14 queries do CSV renderizaram 1 candidato, que ainda
+# por cima era estrangeiro. Mantemos poucas para cobrir as empresas sem
+# desperdicar cota de rate limit — as queries de board valem bem mais.
+REMOTE_COMPANY_QUERY_LIMIT = int(os.getenv("REMOTE_COMPANY_QUERY_LIMIT", "3"))

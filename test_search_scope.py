@@ -39,16 +39,33 @@ class CsvSearchScopeTests(unittest.TestCase):
 
     def test_search_queries_include_the_requested_job_boards(self):
         queries = build_search_queries()
-        board_queries = queries[-sum(
+        board_count = sum(
             len(config.JOB_BOARD_SEARCH_QUERIES[site_name])
             for site_name in config.JOB_BOARD_SEARCH_SITES
-        ):]
+        )
+        board_queries = queries[:board_count]
 
-        self.assertEqual(len(board_queries), 5)
+        self.assertEqual(len(board_queries), board_count)
         for site_name in config.JOB_BOARD_SEARCH_SITES:
             with self.subTest(site=site_name):
                 for clause in config.JOB_BOARD_SEARCH_QUERIES[site_name]:
                     self.assertTrue(any(clause in query for query in board_queries))
+
+    def test_job_board_queries_come_before_csv_company_queries(self):
+        queries = build_search_queries()
+        board_count = sum(
+            len(config.JOB_BOARD_SEARCH_QUERIES[site_name])
+            for site_name in config.JOB_BOARD_SEARCH_SITES
+        )
+        company_queries = companies.build_company_queries(
+            config.REMOTE_COMPANIES_FILE, config.REMOTE_COMPANY_QUERY_LIMIT
+        )
+
+        self.assertTrue(company_queries)
+        self.assertEqual(
+            queries[board_count : board_count + len(company_queries)],
+            company_queries,
+        )
 
     def test_csv_hosts_accept_domains_and_subdomains_only(self):
         self.assertTrue(is_supported_job_url("https://careers.latam.example/jobs/1"))

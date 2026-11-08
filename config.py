@@ -29,7 +29,7 @@ def parse_email_list(value: str | None) -> list[str]:
 
 
 # --- Busca ---------------------------------------------------
-JOB_ALERT_TITLE = "Vagas Remotas de Tecnologia para Nível Inicial"
+JOB_ALERT_TITLE = "Vagas de Desenvolvedor Júnior Remoto"
 
 # Job boards disponíveis para diagnóstico.
 SITES = {
@@ -67,55 +67,16 @@ ENABLED_SITES = [
     if item.strip()
 ] or list(SITES)
 
+# Mantemos poucos termos e curtos: uma lista longa com OR vira uma consulta
+# de milhares de caracteres e os motores de busca devolvem erro em vez de
+# resultados. Medido em producao, 40 termos -> 0 resultados em todas as buscas.
 QUERY_STEMS = [
-    "desenvolvedor de software junior remoto brasil",
-    "software developer junior remote brasil",
-    "programador junior remoto brasil",
-    "engenheiro de software junior remoto brasil",
-    "backend developer junior remoto brasil",
-    "back-end developer junior remoto brasil",
-    "desenvolvedor backend junior remoto brasil",
-    "frontend developer junior remoto brasil",
-    "front-end developer junior remoto brasil",
-    "desenvolvedor frontend junior remoto brasil",
-    "full stack developer junior remoto brasil",
-    "desenvolvedor full stack junior remoto brasil",
-    "desenvolvedor web junior remoto brasil",
-    "desenvolvedor mobile junior remoto brasil",
-    "android developer junior remoto brasil",
-    "ios developer junior remoto brasil",
-    "analista de dados junior remoto brasil",
-    "data analyst junior remote brasil",
-    "data engineer junior remoto brasil",
-    "engenheiro de dados junior remoto brasil",
-    "data scientist junior remote brasil",
-    "cientista de dados junior remoto brasil",
-    "analista de business intelligence junior remoto brasil",
-    "bi analyst junior remote brasil",
-    "machine learning junior engineer remote brasil",
-    "qa analyst junior remoto brasil",
-    "analista de testes junior remoto brasil",
-    "software tester junior remote brasil",
-    "qa automation junior remote brasil",
-    "test automation engineer junior remote brasil",
-    "sdet junior remote brasil",
-    "analista de qualidade de software junior remoto brasil",
-    "analista de seguranca da informacao junior remoto brasil",
-    "cybersecurity analyst junior remote brasil",
-    "information security analyst junior remote brasil",
-    "soc analyst junior remote brasil",
-    "devops engineer junior remoto brasil",
-    "cloud engineer junior remoto brasil",
-    "site reliability engineer junior remote brasil",
-    "platform engineer junior remote brasil",
-    "analista de infraestrutura junior remoto brasil",
-    "database administrator junior remote brasil",
-    "database analyst junior remoto brasil",
-    "analista de sistemas junior remoto brasil",
-    "analista de ti junior remoto brasil",
-    "technical support analyst junior remote brasil",
-    "suporte tecnico de ti junior remoto brasil",
-    "help desk analyst junior remote brasil",
+    "desenvolvedor junior",
+    "dev junior",
+    "programador junior",
+    "backend junior",
+    "frontend junior",
+    "full stack junior",
 ]
 
 MAX_RESULTS_PER_QUERY = 20

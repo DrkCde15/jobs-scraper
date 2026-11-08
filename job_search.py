@@ -18,7 +18,9 @@ log = logging.getLogger(__name__)
 
 DEFAULT_SEARCH_TITLE = "Vaga"
 
-QUERY_DELAY_SECONDS = 0.5
+# Pausa curta entre buscas: disparar tudo de uma vez deixa o motor de busca
+# devolver erro de limite de taxa no meio da rodada.
+QUERY_DELAY_SECONDS = 1.0
 
 
 def ddg_search() -> list[Job]:
@@ -36,15 +38,20 @@ def ddg_search() -> list[Job]:
 
 
 def build_search_queries() -> list[str]:
-    queries = build_company_queries(
-        config.REMOTE_COMPANIES_FILE,
-        config.REMOTE_COMPANY_QUERY_LIMIT,
-    )
+    # Job boards primeiro: saem onde as vagas realmente estao. Os dominios do
+    # CSV vem por ultimo, entao uma busca institucional que nao retorna nada
+    # nao consome a busca util antes dela.
     search_terms = " OR ".join(f'"{stem}"' for stem in config.QUERY_STEMS)
-    queries.extend(
+    queries = [
         f"({search_terms}) {site_clause}"
         for site_name in config.JOB_BOARD_SEARCH_SITES
         for site_clause in config.JOB_BOARD_SEARCH_QUERIES[site_name]
+    ]
+    queries.extend(
+        build_company_queries(
+            config.REMOTE_COMPANIES_FILE,
+            config.REMOTE_COMPANY_QUERY_LIMIT,
+        )
     )
     return queries
 

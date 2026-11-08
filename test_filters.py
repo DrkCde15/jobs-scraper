@@ -16,11 +16,20 @@ class JobAgeTests(unittest.TestCase):
         self.assertTrue(is_allowed_posted_age("180 days ago"))
         self.assertFalse(is_allowed_posted_age("181 days ago"))
 
-    def test_technology_roles_are_in_scope(self):
+    def test_development_roles_are_in_scope(self):
         titles = (
             "Desenvolvedor Backend Junior",
             "Frontend Developer Jr",
             "Engenheiro Full Stack",
+            "Programador Web Junior",
+            "Analista de Sistemas Junior",
+        )
+        for title in titles:
+            with self.subTest(title=title):
+                self.assertTrue(is_target_role(title))
+
+    def test_non_development_technology_roles_are_out_of_scope(self):
+        titles = (
             "Analista de Segurança da Informação",
             "QA Automation Engineer",
             "Data Scientist",
@@ -29,7 +38,7 @@ class JobAgeTests(unittest.TestCase):
         )
         for title in titles:
             with self.subTest(title=title):
-                self.assertTrue(is_target_role(title))
+                self.assertFalse(is_target_role(title))
 
     def test_non_technology_roles_remain_out_of_scope(self):
         self.assertFalse(is_target_role("Assistente Administrativo"))

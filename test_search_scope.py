@@ -1,66 +1,21 @@
-import tempfile
 import unittest
-from pathlib import Path
 from unittest import mock
 
-import companies
 import config
 import job_search
 from job_search import build_search_queries
 from sites import is_supported_job_url, job_site_name
 
 
-class CsvSearchScopeTests(unittest.TestCase):
-    def setUp(self):
-        self.temp_dir = tempfile.TemporaryDirectory()
-        self.csv_path = Path(self.temp_dir.name) / "companies.csv"
-        self.csv_path.write_text(
-            "NAME,WEBSITE,REGION\n"
-            "Worldwide Co,worldwide.example,Worldwide\n"
-            "Latam Co,careers.latam.example,Latin America (Remote)\n"
-            "Brazil Co,brazil.example,Brazil\n",
-            encoding="utf-8",
-        )
-        companies.clear_cache()
-        self.config_patch = mock.patch.object(config, "REMOTE_COMPANIES_FILE", str(self.csv_path))
-        self.config_patch.start()
-
-    def tearDown(self):
-        self.config_patch.stop()
-        companies.clear_cache()
-        self.temp_dir.cleanup()
-
-    def test_queries_are_limited_to_csv_company_domains(self):
-        queries = companies.build_company_queries(str(self.csv_path), limit=8)
-
-        self.assertEqual(len(queries), 2)
-        self.assertIn("site:careers.latam.example", queries[0])
-        self.assertIn("site:brazil.example", queries[1])
-        self.assertTrue(all("site:linkedin.com" not in query for query in queries))
-
-    def board_queries_and_company_queries(self):
-        queries = build_search_queries()
-        company_queries = companies.build_company_queries(
-            config.REMOTE_COMPANIES_FILE, config.REMOTE_COMPANY_QUERY_LIMIT
-        )
-        return queries[: len(queries) - len(company_queries)], company_queries
-
+class SearchScopeTests(unittest.TestCase):
     def test_search_queries_include_the_requested_job_boards(self):
-        board_queries, _ = self.board_queries_and_company_queries()
+        queries = build_search_queries()
 
-        self.assertTrue(board_queries)
+        self.assertTrue(queries)
         for site_name in config.JOB_BOARD_SEARCH_SITES:
             with self.subTest(site=site_name):
                 for clause in config.JOB_BOARD_SEARCH_QUERIES[site_name]:
-                    self.assertTrue(any(clause in query for query in board_queries))
-
-    def test_job_board_queries_come_before_csv_company_queries(self):
-        queries = build_search_queries()
-        _, company_queries = self.board_queries_and_company_queries()
-        board_count = len(queries) - len(company_queries)
-
-        self.assertTrue(company_queries)
-        self.assertEqual(queries[board_count:], company_queries)
+                    self.assertTrue(any(clause in query for query in queries))
 
     def test_search_queries_stay_short_enough_for_search_engines(self):
         # Regressao do bug original: 40 termos em OR viravam uma consulta de
@@ -76,8 +31,7 @@ class CsvSearchScopeTests(unittest.TestCase):
         expected_board_queries = sum(
             len(clauses) for clauses in config.JOB_BOARD_SEARCH_QUERIES.values()
         )
-        board_queries, _ = self.board_queries_and_company_queries()
-        self.assertEqual(len(board_queries), expected_board_queries)
+        self.assertEqual(len(build_search_queries()), expected_board_queries)
 
     def test_search_query_passes_the_configured_backend(self):
         # O padrao do ddgs dispara ~8 requisicoes por query em motores que
@@ -93,13 +47,21 @@ class CsvSearchScopeTests(unittest.TestCase):
         self.assertEqual(engine.text.call_args.kwargs["backend"], config.SEARCH_BACKEND)
         self.assertEqual(engine.text.call_args.kwargs["max_results"], config.MAX_RESULTS_PER_QUERY)
 
-    def test_csv_hosts_accept_domains_and_subdomains_only(self):
-        self.assertTrue(is_supported_job_url("https://careers.latam.example/jobs/1"))
-        self.assertTrue(is_supported_job_url("https://jobs.careers.latam.example/jobs/1"))
-        self.assertFalse(is_supported_job_url("https://latam.example.attacker.test/jobs/1"))
-        self.assertFalse(is_supported_job_url("https://notcareers.latam.example/jobs/1"))
-        self.assertFalse(is_supported_job_url("https://careers.latam.example@attacker.test/jobs/1"))
-        self.assertEqual(job_site_name("https://careers.latam.example/jobs/1"), "Latam Co")
+    def test_hosts_outside_job_boards_are_rejected(self):
+        # So JOB_BOARD_DOMAINS passa: o antigo fallback por dominio de
+        # empresa removido junto com o CSV nao abre caminho para host
+        # desconhecido nem para ataque de subdominio.
+        rejected = (
+            "https://careers.latam.example/jobs/1",
+            "https://jobs.careers.latam.example/jobs/1",
+            "https://latam.example.attacker.test/jobs/1",
+            "https://notcareers.latam.example/jobs/1",
+            "https://careers.latam.example@attacker.test/jobs/1",
+        )
+        for url in rejected:
+            with self.subTest(url=url):
+                self.assertFalse(is_supported_job_url(url))
+                self.assertEqual(job_site_name(url), "")
 
     def test_requested_job_boards_are_accepted_but_other_boards_are_not(self):
         accepted = (

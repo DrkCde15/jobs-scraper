@@ -150,10 +150,3 @@ REQUIRE_POSTED_AGE = env_bool("REQUIRE_POSTED_AGE", default=True)
 # --- Arquivos de estado -------------------------------------
 SEEN_JOBS_FILE = "seen_jobs.json"
 LOG_FILE = "scraper.log"
-
-# --- Empresas remote-friendly -------------------------------
-REMOTE_COMPANIES_FILE = os.getenv("REMOTE_COMPANIES_FILE", "empresas_remote.csv")
-# Medido em producao: 14 queries do CSV renderizaram 1 candidato, que ainda
-# por cima era estrangeiro. Mantemos poucas para cobrir as empresas sem
-# desperdicar cota de rate limit — as queries de board valem bem mais.
-REMOTE_COMPANY_QUERY_LIMIT = int(os.getenv("REMOTE_COMPANY_QUERY_LIMIT", "3"))

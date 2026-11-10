@@ -8,7 +8,6 @@ from typing import Any
 from ddgs import DDGS
 
 import config
-from companies import build_company_queries
 from filters import has_known_blocked_age, is_closed_text, is_desired_seniority, is_target_role
 from models import Job
 from sites import is_supported_job_url, job_site_name, normalize_job_url
@@ -38,27 +37,16 @@ def ddg_search() -> list[Job]:
 
 
 def build_search_queries() -> list[str]:
-    # Job boards primeiro: saem onde as vagas realmente estao. Os dominios do
-    # CSV vem por ultimo, entao uma busca institucional que nao retorna nada
-    # nao consome a busca util antes dela.
-    #
     # Todos os termos entram na mesma consulta OR: medido em producao, fatiar
     # em lotes de 2 dobrou o numero de buscas (12 -> 22) e CAIU o volume de
     # resultados (32 -> 18), porque cada fatia fica estreita demais e ainda
     # gasta mais cota de rate limit.
     search_terms = " OR ".join(f'"{stem}"' for stem in config.QUERY_STEMS)
-    queries = [
+    return [
         f"({search_terms}) {site_clause}"
         for site_name in config.JOB_BOARD_SEARCH_SITES
         for site_clause in config.JOB_BOARD_SEARCH_QUERIES[site_name]
     ]
-    queries.extend(
-        build_company_queries(
-            config.REMOTE_COMPANIES_FILE,
-            config.REMOTE_COMPANY_QUERY_LIMIT,
-        )
-    )
-    return queries
 
 
 def search_query_jobs(duckduckgo: DDGS, query: str, seen_urls: set[str]) -> list[Job]:

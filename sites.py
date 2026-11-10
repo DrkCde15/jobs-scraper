@@ -10,7 +10,6 @@ from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 from bs4 import BeautifulSoup
 
 import config
-from companies import find_remote_company_for_host
 from filters import (
     extract_posted_age_text,
     is_allowed_posted_age,
@@ -55,8 +54,7 @@ def job_site_name(url: str) -> str:
     for site_name, domains in config.JOB_BOARD_DOMAINS.items():
         if host_matches_domains(host, domains):
             return site_name
-    company = find_remote_company_for_host(host, config.REMOTE_COMPANIES_FILE)
-    return company["name"] if company else ""
+    return ""
 
 
 def is_supported_job_url(url: str) -> bool:
@@ -68,12 +66,10 @@ def is_supported_job_url(url: str) -> bool:
         return False
     if is_listing_url(url):
         return False
-    if any(
+    return any(
         host_matches_domains(parsed_url.hostname, domains)
         for domains in config.JOB_BOARD_DOMAINS.values()
-    ):
-        return True
-    return bool(find_remote_company_for_host(parsed_url.hostname, config.REMOTE_COMPANIES_FILE))
+    )
 
 
 # Paginas de listagem e de pesquisa dos job boards: carregam o dominio do

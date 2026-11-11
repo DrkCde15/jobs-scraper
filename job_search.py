@@ -105,7 +105,7 @@ def is_relevant_search_job(job: Job) -> bool:
         log.info("descartada (idade): %s", job["url"])
         return False
     if not is_desired_seniority(job["title"], job["snippet"]):
-        log.info("descartada (senioridade): %s", job["url"])
+        log.info("descartada (senioridade): %s | %s", job["url"], job["title"][:80])
         return False
     if config.REQUIRE_TARGET_ROLE and not is_target_role(job["title"], job["snippet"]):
         log.info("descartada (papel): %s | %s", job["url"], job["title"][:70])

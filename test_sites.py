@@ -168,6 +168,10 @@ class ListingUrlTests(unittest.TestCase):
             "https://programathor.com.br/jobs-front-end/remoto",
             "https://trampos.co/oportunidades/",
             "https://trampos.co/oportunidades/?pagina=2",
+            # Catho: sem o segmento numerico do ID a pagina e uma busca SEO
+            # ("Vagas de emprego de ..."), medida em producao com 44 links.
+            "https://www.catho.com.br/vagas/desenvolvedora-java-jr-remoto/",
+            "https://www.catho.com.br/vagas/desenvolvedor-junior",
         )
         job_pages = (
             "https://br.indeed.com/viewjob?jk=abc",
@@ -179,7 +183,7 @@ class ListingUrlTests(unittest.TestCase):
             "https://localiza.gupy.io/jobs/11499926?jobBoardSource=gupy_public_page",
             "https://programathor.com.br/jobs/4478-desenvolvedor-junior-remoto",
             "https://trampos.co/oportunidades/774739",
-            "https://www.catho.com.br/vagas/desenvolvedora-java-jr-remoto/",
+            "https://www.catho.com.br/vagas/desenvolvedora-java-jr-remoto/39094103",
             "https://www.geekhunter.com.br/vaga/desenvolvedor-a-backend-jr-pl-automacao-e-ia",
         )
         for url in listings:

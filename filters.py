@@ -258,30 +258,23 @@ PLENO_MARKERS = {
 }
 
 TARGET_ROLE_MARKERS = {
-    # Desenvolvimento de software, web e mobile.
-    "desenvolvedor",
-    "desenvolvedora",
-    "developer",
-    "dev",
-    "software engineer",
-    "engenheiro de software",
-    "programador",
-    "programmer",
-    "backend",
-    "back-end",
-    "front end",
-    "frontend",
-    "front-end",
-    "full stack",
-    "fullstack",
-    "web developer",
-    "mobile developer",
-    "android developer",
-    "ios developer",
-    "application developer",
-    "software development",
-    "analista de sistemas",
-    "systems analyst",
+    # Escopo: somente vagas de Python. O marcador bate no titulo ou no
+    # texto de apoio, entao "Desenvolvedor Junior" com Python no escopo
+    # passa e "Analista de Marketing" com Python no rodape nao.
+    "python",
+    "python developer",
+    "python engineer",
+    "python programmer",
+    "desenvolvedor python",
+    "desenvolvedora python",
+    "programador python",
+    "engenheiro de software python",
+    # Frameworks que identificam a vaga mesmo sem a palavra "python"
+    # no titulo.
+    "django",
+    "flask",
+    "fastapi",
+    "pandas",
 }
 
 ROLE_BLOCKLIST = {

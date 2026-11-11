@@ -16,7 +16,25 @@ class JobAgeTests(unittest.TestCase):
         self.assertTrue(is_allowed_posted_age("180 days ago"))
         self.assertFalse(is_allowed_posted_age("181 days ago"))
 
-    def test_development_roles_are_in_scope(self):
+    def test_python_roles_are_in_scope(self):
+        titles = (
+            "Desenvolvedor Python Junior",
+            "Python Developer Jr",
+            "Engenheiro de Software Python",
+            "Programador Python",
+            "Desenvolvedor Django Pleno",
+        )
+        for title in titles:
+            with self.subTest(title=title):
+                self.assertTrue(is_target_role(title))
+
+    def test_python_in_supporting_text_is_enough(self):
+        # Titulo generico de junior passa quando o escopo cita Python.
+        self.assertTrue(is_target_role("Desenvolvedor Junior", "vaga python remota"))
+        # Titulo fora de escopo continua fora mesmo com Python no rodape.
+        self.assertFalse(is_target_role("Analista de Marketing", "uso de python"))
+
+    def test_non_python_technology_roles_are_out_of_scope(self):
         titles = (
             "Desenvolvedor Backend Junior",
             "Frontend Developer Jr",
@@ -26,7 +44,7 @@ class JobAgeTests(unittest.TestCase):
         )
         for title in titles:
             with self.subTest(title=title):
-                self.assertTrue(is_target_role(title))
+                self.assertFalse(is_target_role(title))
 
     def test_non_development_technology_roles_are_out_of_scope(self):
         titles = (

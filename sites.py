@@ -4,6 +4,7 @@ import json
 import logging
 import re
 from collections.abc import Iterable
+from html import unescape as html_unescape
 from typing import Any
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
@@ -90,9 +91,20 @@ LISTING_URL_PATTERNS = (
     re.compile(r"trampos\.co/oportunidades/?(?:[?#]|$)", re.IGNORECASE),
 )
 
+# Catho: a vaga individual e /vagas/<slug>/<ID>/ (ID numerico), enquanto
+# /vagas/, /vagas/<slug>/ e /vagas/<slug>/<regiao>/ sao paginas de busca
+# SEO — o site: do motor devolve so as listagens, e elas chegam sem
+# titulo de vaga, o que virava falso "vaga encerrada".
+CATHO_ANY_VAGAS_RE = re.compile(r"catho\.com\.br/vagas/", re.IGNORECASE)
+CATHO_JOB_ID_RE = re.compile(r"catho\.com\.br/vagas/[^/]+/\d{4,}/?(?:[?#]|$)", re.IGNORECASE)
+
 
 def is_listing_url(url: str) -> bool:
-    return any(pattern.search(url or "") for pattern in LISTING_URL_PATTERNS)
+    if any(pattern.search(url or "") for pattern in LISTING_URL_PATTERNS):
+        return True
+    return bool(CATHO_ANY_VAGAS_RE.search(url or "")) and not bool(
+        CATHO_JOB_ID_RE.search(url or "")
+    )
 
 
 def host_matches_domains(host: str, domains: Iterable[str]) -> bool:
@@ -152,10 +164,12 @@ def is_individual_linkedin_page(url: str) -> bool:
 # ---------------------------------------------------------------
 
 
-def open_page(page: Any, url: str) -> None:
-    page.goto(url, timeout=PAGE_LOAD_TIMEOUT_MS, wait_until="domcontentloaded")
+def open_page(page: Any, url: str) -> int:
+    """Navega para `url` e devolve o status HTTP (200 quando ausente)."""
+    response = page.goto(url, timeout=PAGE_LOAD_TIMEOUT_MS, wait_until="domcontentloaded")
     wait_for_network_idle(page)
     reveal_lazy_content(page)
+    return int(getattr(response, "status", 0) or 200)
 
 
 def wait_for_network_idle(page: Any) -> None:
@@ -617,7 +631,9 @@ LOCATION_LABEL_RE = re.compile(
 
 
 def enrich_generic_job(page: Any, job: Job) -> Job:
-    open_page(page, job["url"])
+    status = open_page(page, job["url"])
+    if status >= 400:
+        raise JobRejected(f"pagina indisponivel (HTTP {status})")
     snapshot = capture_page_snapshot(page, job["url"])
     if is_closed_generic_job_page(snapshot):
         raise JobRejected("vaga encerrada ou indisponivel")
@@ -716,14 +732,28 @@ def extract_generic_job_details(snapshot: dict[str, Any], fallback_job: Job) -> 
     }
 
 
+def parse_jsonld_script(raw: str) -> Any:
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        pass
+    # Alguns boards (gupy) servem o JobPosting com as aspas viradas em
+    # &quot;: o navegador ignora entities dentro de <script>, mas o
+    # BeautifulSoup devolve o texto cru e o json.loads falha. Sem o
+    # unescape o datePosted, a empresa e o TELECOMMUTE da vaga se perdem.
+    try:
+        return json.loads(html_unescape(raw))
+    except json.JSONDecodeError:
+        return None
+
+
 def first_jsonld_job(soup: BeautifulSoup) -> dict[str, Any] | None:
     for script in soup.select("script[type='application/ld+json']"):
         raw = script.string or script.get_text()
         if not raw:
             continue
-        try:
-            data = json.loads(raw)
-        except json.JSONDecodeError:
+        data = parse_jsonld_script(raw)
+        if data is None:
             continue
         for item in walk_jsonld(data):
             job_type = item.get("@type")

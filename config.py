@@ -92,13 +92,12 @@ ENABLED_SITES = [
 # Mantemos poucos termos e curtos: uma lista longa com OR vira uma consulta
 # de milhares de caracteres e os motores de busca devolvem erro em vez de
 # resultados. Medido em producao, 40 termos -> 0 resultados em todas as buscas.
+# Escopo: somente vagas de Python (junior/entry).
 QUERY_STEMS = [
-    "desenvolvedor junior",
-    "dev junior",
-    "programador junior",
-    "backend junior",
-    "frontend junior",
-    "full stack junior",
+    "desenvolvedor python",
+    "python junior",
+    "python developer",
+    "engenheiro de software python",
 ]
 
 MAX_RESULTS_PER_QUERY = 20

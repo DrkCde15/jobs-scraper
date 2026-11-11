@@ -99,13 +99,13 @@ def is_relevant_search_job(job: Job) -> bool:
         log.info("descartada (url nao suportada): %s", job["url"])
         return False
     if is_closed_text(result_text):
-        log.debug("descartada (encerrada): %s", job["url"])
+        log.info("descartada (encerrada): %s", job["url"])
         return False
     if has_known_blocked_age(result_text):
-        log.debug("descartada (idade): %s", job["url"])
+        log.info("descartada (idade): %s", job["url"])
         return False
     if not is_desired_seniority(job["title"], job["snippet"]):
-        log.debug("descartada (senioridade): %s", job["url"])
+        log.info("descartada (senioridade): %s", job["url"])
         return False
     if config.REQUIRE_TARGET_ROLE and not is_target_role(job["title"], job["snippet"]):
         log.info("descartada (papel): %s | %s", job["url"], job["title"][:70])

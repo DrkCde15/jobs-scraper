@@ -462,7 +462,10 @@ def is_junior_or_intern(title: str, supporting_text: str) -> bool:
 
 
 def is_desired_seniority(title: str, supporting_text: str) -> bool:
-    focused_text = f"{title} {supporting_text}"
+    # Senioridade e decidida pelo titulo. O snippet do buscador costuma
+    # citar "pleno e junior" ou "4 anos de experiencia" ao mesmo tempo e
+    # derrubava vaga junior que o titulo classifica corretamente.
+    focused_text = title
     if has_seniority_block(focused_text):
         return False
     if contains_any_marker(focused_text, PLENO_MARKERS):

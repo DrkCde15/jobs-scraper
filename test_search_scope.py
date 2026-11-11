@@ -66,6 +66,9 @@ class SearchScopeTests(unittest.TestCase):
     def test_requested_job_boards_are_accepted_but_other_boards_are_not(self):
         accepted = (
             "https://www.linkedin.com/jobs/view/123",
+            # indeed entra pelo JobSpy, que busca direto no board; a query
+            # site: do DDG continuou devolvendo 0 resultados.
+            "https://br.indeed.com/viewjob?jk=abc",
             "https://www.infojobs.com.br/vaga-developer.aspx",
             "https://portal.gupy.io/job/123",
             "https://www.vagas.com.br/vaga-de-dev-jr/1",
@@ -78,10 +81,8 @@ class SearchScopeTests(unittest.TestCase):
             with self.subTest(url=url):
                 self.assertTrue(is_supported_job_url(url))
 
-        # Fora de escopo: renderizavam quase nada (indeed 0 em 9 queries,
-        # glassdoor 1 em 6) e cada busca custa cota de rate limit.
+        # Fora de escopo: nao estao em JOB_BOARD_DOMAINS nem no JobSpy.
         rejected = (
-            "https://br.indeed.com/viewjob?jk=abc",
             "https://www.glassdoor.com.br/Vaga/desenvolvedor-vagas",
             "https://www.monster.com/jobs/1",
             "https://linkedin.com.attacker.test/jobs/1",
@@ -91,6 +92,7 @@ class SearchScopeTests(unittest.TestCase):
                 self.assertFalse(is_supported_job_url(url))
 
         self.assertEqual(job_site_name(accepted[0]), "linkedin")
+        self.assertEqual(job_site_name(accepted[1]), "indeed")
 
     def test_listing_pages_are_rejected_even_on_allowed_boards(self):
         listings = (

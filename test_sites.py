@@ -194,5 +194,36 @@ class ListingUrlTests(unittest.TestCase):
                 self.assertFalse(sites.is_listing_url(url))
 
 
+class WorkplaceExtractionTests(unittest.TestCase):
+    def build_soup(self, html: str) -> BeautifulSoup:
+        return BeautifulSoup(html, "html.parser")
+
+    def test_workplace_type_element_is_used(self):
+        html = '<div class="job-details-jobs-unified-top-card__workplace-type">Remoto</div>'
+        self.assertEqual(sites.select_workplace_text(self.build_soup(html)), "Remoto")
+
+    def test_metadata_age_is_not_a_workplace(self):
+        # Sem o elemento de modalidade, o fallback .topcard__flavor--metadata
+        # devolve a idade da vaga e a vaga chega como "Brasil | Há 3 semanas".
+        html = '<div class="topcard__flavor--metadata">Há 3 semanas</div>'
+        self.assertEqual(sites.select_workplace_text(self.build_soup(html)), "")
+
+    def test_metadata_with_location_and_age_is_skipped(self):
+        html = '<div class="topcard__flavor--metadata">Brasil · Há 3 semanas</div>'
+        self.assertEqual(sites.select_workplace_text(self.build_soup(html)), "")
+
+    def test_metadata_with_remote_marker_and_age_is_kept(self):
+        html = '<div class="topcard__flavor--metadata">Remoto · Há 3 semanas</div>'
+        self.assertEqual(
+            sites.select_workplace_text(self.build_soup(html)), "Remoto · Há 3 semanas"
+        )
+
+    def test_metadata_without_age_is_used_as_workplace(self):
+        html = '<div class="topcard__flavor--metadata">Remoto · Brasil</div>'
+        self.assertEqual(
+            sites.select_workplace_text(self.build_soup(html)), "Remoto · Brasil"
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

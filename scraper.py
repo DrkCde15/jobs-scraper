@@ -15,7 +15,7 @@ from datetime import datetime
 
 import config
 from emailer import send_email
-from job_search import ddg_search
+from job_search import search_all
 from models import Job
 from storage import load_seen, save_seen
 from validation import enrich_with_playwright, job_seen_keys
@@ -50,7 +50,7 @@ def run_job() -> None:
     log.info("▶  Iniciando varredura  %s", datetime.now().isoformat(sep=" ", timespec="seconds"))
 
     seen_jobs = load_seen()
-    jobs = enrich_with_playwright(ddg_search())
+    jobs = enrich_with_playwright(search_all())
     new_jobs = filter_new(jobs, seen_jobs)
 
     send_email(new_jobs)

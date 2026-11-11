@@ -1,6 +1,11 @@
 import unittest
 
-from filters import is_allowed_posted_age, is_target_role, parse_job_age_to_days
+from filters import (
+    is_allowed_posted_age,
+    is_target_location,
+    is_target_role,
+    parse_job_age_to_days,
+)
 
 
 class JobAgeTests(unittest.TestCase):
@@ -61,6 +66,23 @@ class JobAgeTests(unittest.TestCase):
     def test_non_technology_roles_remain_out_of_scope(self):
         self.assertFalse(is_target_role("Assistente Administrativo"))
         self.assertFalse(is_target_role("Vendedor"))
+
+
+class TargetLocationTests(unittest.TestCase):
+    def test_country_code_br_counts_as_brazil(self):
+        # Vagas do inhire/ATS brasileiros publicam a localizacao so como "BR".
+        self.assertTrue(is_target_location("BR", "remoto"))
+        self.assertTrue(is_target_location("br", "home office"))
+
+    def test_brazil_without_remote_signal_is_rejected(self):
+        # REQUIRE_REMOTE: so "Brasil" nao prova que a vaga e remota.
+        self.assertFalse(is_target_location("Brasil"))
+
+    def test_remote_location_in_brazil_passes(self):
+        self.assertTrue(is_target_location("Remoto", "Brasil"))
+
+    def test_foreign_location_is_rejected(self):
+        self.assertFalse(is_target_location("Spain, Serbia, Poland", "Remote"))
 
 
 if __name__ == "__main__":

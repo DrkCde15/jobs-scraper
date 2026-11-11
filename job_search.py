@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import time
 from collections.abc import Iterable, Mapping
 from typing import Any
@@ -22,6 +23,26 @@ DEFAULT_SEARCH_TITLE = "Vaga"
 QUERY_DELAY_SECONDS = 2.0
 
 
+def search_all() -> list[Job]:
+    """Busca em todas as fontes ligadas e remove URLs repetidas entre elas."""
+    jobs = ddg_search()
+    jobs.extend(jobspy_search())
+    return dedup_jobs(jobs)
+
+
+def dedup_jobs(jobs: Iterable[Job]) -> list[Job]:
+    unique_jobs: list[Job] = []
+    seen_urls: set[str] = set()
+    for job in jobs:
+        key = normalize_job_url(job.get("url", ""))
+        if key:
+            if key in seen_urls:
+                continue
+            seen_urls.add(key)
+        unique_jobs.append(job)
+    return unique_jobs
+
+
 def ddg_search() -> list[Job]:
     results: list[Job] = []
     seen_urls: set[str] = set()
@@ -34,6 +55,96 @@ def ddg_search() -> list[Job]:
 
     log.info("🔎  %d vagas únicas encontradas via DDG", len(results))
     return results
+
+
+def jobspy_search() -> list[Job]:
+    """Busca direta nos job boards via JobSpy (LinkedIn, Indeed, ...).
+
+    O JobSpy devolve descricao e data de publicacao do proprio board, o que
+    alimenta os mesmos filtros de senioridade, papel e idade usados no DDG.
+    Uma falha por termo (ex.: LinkedIn 429 em burst) vira warning e as
+    demais buscas seguem.
+    """
+    if not config.JOBSPY_ENABLED or not config.JOBSPY_SITES:
+        return []
+
+    from jobspy import scrape_jobs
+
+    results: list[Job] = []
+    seen_urls: set[str] = set()
+
+    for term in config.QUERY_STEMS:
+        log.info("🔍  JobSpy buscando: %s", term)
+        try:
+            frame = scrape_jobs(
+                site_name=list(config.JOBSPY_SITES),
+                search_term=term,
+                location=config.JOBSPY_LOCATION,
+                is_remote=config.JOBSPY_IS_REMOTE,
+                hours_old=config.JOBSPY_HOURS_OLD,
+                results_wanted=config.JOBSPY_RESULTS_PER_TERM,
+                country_indeed=config.JOBSPY_COUNTRY_INDEED,
+                verbose=0,
+            )
+        except Exception as exc:
+            log.warning("Erro no JobSpy ('%s'): %s", term, exc)
+            continue
+
+        rows: list[Mapping[str, Any]] = list(frame.to_dict("records") if frame is not None else [])
+        hits = [jobspy_hit_to_dict(row) for row in rows]
+        jobs = accept_search_hits(hits, seen_urls, require_supported_url=False)
+        log.info("✅ JobSpy '%s': %d/%d links aproveitados", term, len(jobs), len(hits))
+        results.extend(jobs)
+        time.sleep(QUERY_DELAY_SECONDS)
+
+    log.info("🔎  %d vagas únicas encontradas via JobSpy", len(results))
+    return results
+
+
+def jobspy_hit_to_dict(row: Mapping[str, Any]) -> dict[str, str]:
+    """JobPost do JobSpy no mesmo shape de hit do DDGS.
+
+    `href/title/body` deixam o hit reaproveitar accept_search_hits e todos
+    os filtros sem caminho paralelo. `source` guarda o board de origem
+    (indeed/linkedin) porque a URL pode apontar para o site da empresa.
+    """
+    url = jobspy_text(row.get("job_url_direct")) or jobspy_text(row.get("job_url"))
+    parts = [jobspy_text(row.get("description"))]
+    posted_age = format_jobspy_posted_age(row.get("date_posted"))
+    if posted_age:
+        parts.append(posted_age)
+    return {
+        "href": url,
+        "title": jobspy_text(row.get("title")),
+        "body": " ".join(part for part in parts if part),
+        "source": jobspy_text(row.get("site")),
+    }
+
+
+def jobspy_text(value: object) -> str:
+    """Normaliza o valor vindo do pandas: NaN vira string no DDGS, nao URL."""
+    if value is None:
+        return ""
+    if isinstance(value, float) and value != value:  # NaN
+        return ""
+    return str(value).strip()
+
+
+def format_jobspy_posted_age(value: object) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, float) and value != value:  # NaN
+        return ""
+    if hasattr(value, "strftime"):
+        try:
+            return f"publicada em {value.strftime('%d/%m/%Y')}"
+        except (TypeError, ValueError):
+            return ""
+    match = re.search(r"(\d{4})-(\d{2})-(\d{2})", str(value))
+    if not match:
+        return ""
+    year, month, day = match.groups()
+    return f"publicada em {day}/{month}/{year}"
 
 
 def build_search_queries() -> list[str]:
@@ -69,11 +180,16 @@ def search_query_jobs(duckduckgo: DDGS, query: str, seen_urls: set[str]) -> list
     return jobs
 
 
-def accept_search_hits(hits: Iterable[Mapping[str, Any]], seen_urls: set[str]) -> list[Job]:
+def accept_search_hits(
+    hits: Iterable[Mapping[str, Any]],
+    seen_urls: set[str],
+    *,
+    require_supported_url: bool = True,
+) -> list[Job]:
     accepted_jobs: list[Job] = []
     for hit in hits:
         job = parse_search_hit(hit)
-        if not is_relevant_search_job(job):
+        if not is_relevant_search_job(job, require_supported_url=require_supported_url):
             continue
 
         canonical_job = canonicalize_search_job(job)
@@ -90,12 +206,20 @@ def parse_search_hit(hit: Mapping[str, Any]) -> Job:
         "url": str(hit.get("href") or "").strip(),
         "title": str(hit.get("title") or DEFAULT_SEARCH_TITLE).strip(),
         "snippet": str(hit.get("body") or "").strip(),
+        "source": str(hit.get("source") or "").strip(),
     }
 
 
-def is_relevant_search_job(job: Job) -> bool:
+def is_relevant_search_job(job: Job, *, require_supported_url: bool = True) -> bool:
     result_text = f"{job['title']} {job['snippet']}"
-    if not job["url"] or not is_supported_job_url(job["url"]):
+    if not job["url"]:
+        log.info("descartada (sem url)")
+        return False
+    # O JobSpy ja veio de um board curado: a URL pode apontar para o
+    # proprio site de recrutamento da empresa (inhire, lever, greenhouse),
+    # que e onde a candidatura acontece. O DDG, que aceita qualquer host,
+    # continua exigindo dominio conhecido.
+    if require_supported_url and not is_supported_job_url(job["url"]):
         log.info("descartada (url nao suportada): %s", job["url"])
         return False
     if is_closed_text(result_text):
@@ -117,5 +241,5 @@ def canonicalize_search_job(job: Job) -> Job:
     return {
         **job,
         "url": normalize_job_url(job["url"]),
-        "source": job_site_name(job["url"]),
+        "source": job_site_name(job["url"]) or job.get("source", ""),
     }

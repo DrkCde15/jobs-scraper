@@ -63,6 +63,7 @@ JOB_BOARD_SEARCH_SITES = (
 )
 JOB_BOARD_DOMAINS = {
     "linkedin": ("linkedin.com",),
+    "indeed": ("indeed.com",),
     "infojobs": ("infojobs.com.br",),
     "vagas": ("vagas.com.br",),
     "catho": ("catho.com.br",),
@@ -145,6 +146,28 @@ REQUIRE_TARGET_ROLE = env_bool("REQUIRE_TARGET_ROLE", default=True)
 # --- Filtro de idade de vagas (dias) ---------------------------
 MAX_JOB_AGE_DAYS = int(os.getenv("MAX_JOB_AGE_DAYS", "180"))
 REQUIRE_POSTED_AGE = env_bool("REQUIRE_POSTED_AGE", default=True)
+
+# --- JobSpy (busca direta nos job boards) ---------------------
+# Busca nos proprios boards em vez do buscador generico: sem o rate limit
+# estocastico do Yahoo e com descricao/data de publicacao ja no resultado.
+# Medido em producao local (2026-11-11): 4 termos -> 80 vagas unicas do
+# Indeed em ~46s, 21 passando nos filtros, contra 0 via DDG.
+# O LinkedIn respondeu 429 ao 2o termo (burst), por isso entra como
+# complemento: a falha vira warning e as demais fontes seguem.
+JOBSPY_ENABLED = env_bool("JOBSPY_ENABLED", default=True)
+JOBSPY_SITES = tuple(
+    site.strip().lower()
+    for site in os.getenv("JOBSPY_SITES", "indeed,linkedin").split(",")
+    if site.strip()
+)
+JOBSPY_LOCATION = os.getenv("JOBSPY_LOCATION", "Brazil")
+JOBSPY_COUNTRY_INDEED = os.getenv("JOBSPY_COUNTRY_INDEED", "Brazil")
+JOBSPY_IS_REMOTE = env_bool("JOBSPY_IS_REMOTE", default=True)
+JOBSPY_RESULTS_PER_TERM = int(os.getenv("JOBSPY_RESULTS_PER_TERM", "25"))
+# hours_old do JobSpy: a mesma janela de idade do filtro do Playwright.
+JOBSPY_HOURS_OLD = int(
+    os.getenv("JOBSPY_HOURS_OLD", str(max(MAX_JOB_AGE_DAYS, 1) * 24))
+)
 
 # --- Arquivos de estado -------------------------------------
 SEEN_JOBS_FILE = "seen_jobs.json"

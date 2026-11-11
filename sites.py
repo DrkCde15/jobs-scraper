@@ -12,6 +12,8 @@ from bs4 import BeautifulSoup
 
 import config
 from filters import (
+    NON_REMOTE_MARKERS,
+    REMOTE_MARKERS,
     extract_posted_age_text,
     is_allowed_posted_age,
     is_closed_text,
@@ -486,7 +488,7 @@ def element_signal_text(element: Any, attributes: Iterable[str]) -> str:
 def extract_linkedin_job_details(snapshot: dict[str, Any], fallback_job: Job) -> JobDetails:
     soup = snapshot["soup"]
     top_card_text = select_text(soup, TOP_CARD_SELECTORS)
-    workplace = select_text(soup, WORKPLACE_SELECTORS)
+    workplace = select_workplace_text(soup)
     posted_age = extract_posted_age_text(top_card_text) or extract_posted_age_text(
         snapshot["full_text"]
     )
@@ -499,6 +501,27 @@ def extract_linkedin_job_details(snapshot: dict[str, Any], fallback_job: Job) ->
         posted_age=posted_age,
         top_card_text=top_card_text,
     )
+
+
+def select_workplace_text(soup: BeautifulSoup) -> str:
+    """Modalidade real da vaga, sem cair no seletor de fallback de idade.
+
+    `.topcard__flavor--metadata` guarda a data de publicacao
+    ("Ha 3 semanas") junto da localizacao; quando o elemento de modalidade
+    nao existe, o seletor devolve a idade no campo `workplace`, o que
+    polui o escopo do filtro de remoto e o e-mail.
+    """
+    for selector in WORKPLACE_SELECTORS:
+        element = soup.select_one(selector)
+        text = element.get_text(" ", strip=True) if element else ""
+        if not text:
+            continue
+        if extract_posted_age_text(text) and not contains_any_marker(
+            text, (*REMOTE_MARKERS, *NON_REMOTE_MARKERS)
+        ):
+            continue
+        return normalize_whitespace(text)
+    return ""
 
 
 def extract_linkedin_job_title(snapshot: dict[str, Any], fallback_job: Job) -> str:

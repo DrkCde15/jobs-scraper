@@ -87,6 +87,7 @@ NORMALIZED_TARGET_LOCATIONS = {
     "sao paulo e regiao, brasil",
     "brasil",
     "brazil",
+    "br",
     "remote, brazil",
     "remote - brazil",
     "remoto, brasil",

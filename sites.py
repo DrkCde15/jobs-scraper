@@ -713,6 +713,7 @@ def extract_generic_job_details(snapshot: dict[str, Any], fallback_job: Job) -> 
     workplace = pick_first(
         jsonld_workplace(jsonld),
         extract_generic_workplace(soup),
+        extract_embedded_workplace_type(soup),
         "",
     )
     posted_age = pick_first(
@@ -825,10 +826,35 @@ def jsonld_workplace(jsonld: dict[str, Any] | None) -> str:
         return ""
     location_type = jsonld.get("jobLocationType")
     if isinstance(location_type, list):
-        location_type = ", ".join(location_type)
+        location_type = ", ".join(str(item) for item in location_type)
     if isinstance(location_type, str) and location_type.strip():
         return map_workplace_type(location_type)
+    # Gupy e similares nao mandam jobLocationType: o modo fica em
+    # jobLocation.additionalProperty.value ("TELECOMMUTE", "ON_SITE", ...).
+    for value in jsonld_additional_property_values(jsonld):
+        mapped = map_workplace_type(value)
+        if mapped != value:
+            return mapped
     return ""
+
+
+def jsonld_additional_property_values(jsonld: dict[str, Any]) -> Iterable[str]:
+    locations = jsonld.get("jobLocation")
+    if isinstance(locations, dict):
+        locations = [locations]
+    if not isinstance(locations, list):
+        return
+    for location in locations:
+        if not isinstance(location, dict):
+            continue
+        property_value = location.get("additionalProperty")
+        if isinstance(property_value, dict):
+            property_value = [property_value]
+        if not isinstance(property_value, list):
+            continue
+        for item in property_value:
+            if isinstance(item, dict) and isinstance(item.get("value"), str):
+                yield item["value"]
 
 
 def map_workplace_type(location_type: str) -> str:
@@ -919,6 +945,31 @@ def extract_generic_workplace(soup: BeautifulSoup) -> str:
         text = element.get_text(" ", strip=True)
         if 2 <= len(text) <= 60:
             return text
+    return ""
+
+
+EMBEDDED_WORKPLACE_TYPE_RE = re.compile(r'"workplaceType"\s*:\s*"([^"]{1,40})"', re.IGNORECASE)
+
+
+def extract_embedded_workplace_type(soup: BeautifulSoup) -> str:
+    """Ler o modo de trabalho de JSON embutido na pagina.
+
+    O gupy manda o JobPosting sem jobLocationType e sem
+    additionalProperty; o valor fica so em `"workplaceType":"on-site"`
+    dentro do bundle do React. Sem isso a vaga chega como
+    "sem modalidade" e o REQUIRE_REMOTE derruba remota e presencial
+    pelo mesmo motivo.
+    """
+    for script in soup.select("script"):
+        raw = script.string or ""
+        if not raw:
+            continue
+        match = EMBEDDED_WORKPLACE_TYPE_RE.search(raw)
+        if not match:
+            continue
+        mapped = map_workplace_type(match.group(1))
+        if mapped != match.group(1):
+            return mapped
     return ""
 
 

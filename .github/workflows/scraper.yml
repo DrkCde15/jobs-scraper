@@ -15,6 +15,9 @@ concurrency:
 jobs:
   scrape:
     runs-on: ubuntu-latest
+    # Sem isso, um install que trava segura o concurrency group por horas
+    # e nenhum run seguinte consegue iniciar.
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -25,13 +28,20 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Instalar dependencias
-        run: |
-          pip install -r requirements.txt
-          playwright install chromium
-          playwright install-deps
+      - name: Instalar pacotes pip
+        timeout-minutes: 5
+        run: pip install -r requirements.txt
+
+      - name: Instalar navegador do Playwright
+        timeout-minutes: 8
+        run: playwright install chromium
+
+      - name: Instalar dependencias de sistema
+        timeout-minutes: 8
+        run: playwright install-deps
 
       - name: Rodar scraper
+        timeout-minutes: 15
         env:
           EMAIL_SMTP_HOST: ${{ secrets.EMAIL_SMTP_HOST }}
           EMAIL_SMTP_PORT: "587"

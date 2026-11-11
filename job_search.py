@@ -96,14 +96,21 @@ def parse_search_hit(hit: Mapping[str, Any]) -> Job:
 def is_relevant_search_job(job: Job) -> bool:
     result_text = f"{job['title']} {job['snippet']}"
     if not job["url"] or not is_supported_job_url(job["url"]):
+        log.info("descartada (url nao suportada): %s", job["url"])
         return False
     if is_closed_text(result_text):
+        log.debug("descartada (encerrada): %s", job["url"])
         return False
     if has_known_blocked_age(result_text):
+        log.debug("descartada (idade): %s", job["url"])
         return False
     if not is_desired_seniority(job["title"], job["snippet"]):
+        log.debug("descartada (senioridade): %s", job["url"])
         return False
-    return not config.REQUIRE_TARGET_ROLE or is_target_role(job["title"], job["snippet"])
+    if config.REQUIRE_TARGET_ROLE and not is_target_role(job["title"], job["snippet"]):
+        log.info("descartada (papel): %s | %s", job["url"], job["title"][:70])
+        return False
+    return True
 
 
 def canonicalize_search_job(job: Job) -> Job:

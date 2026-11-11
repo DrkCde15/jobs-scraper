@@ -37,8 +37,17 @@ jobs:
         run: playwright install chromium
 
       - name: Instalar dependencias de sistema
-        timeout-minutes: 8
-        run: playwright install-deps
+        timeout-minutes: 10
+        run: |
+          # O mirror azure.archive.ubuntu.com do runner esta respondendo
+          # Ign: em cadeia e o install-deps nunca termina. O fallback para
+          # archive.ubuntu.com so acontece apos minutos de retry.
+          for f in /etc/apt/sources.list.d/ubuntu.sources /etc/apt/sources.list.d/*.list /etc/apt/sources.list; do
+            if [ -f "$f" ]; then
+              sudo sed -i 's|azure\.archive\.ubuntu\.com|archive.ubuntu.com|g' "$f"
+            fi
+          done
+          playwright install-deps
 
       - name: Rodar scraper
         timeout-minutes: 15

@@ -71,6 +71,9 @@ JOB_BOARD_DOMAINS = {
     "geekhunter": ("geekhunter.com.br",),
     "gupy": ("gupy.io",),
     "trampos": ("trampos.co",),
+    # Domínios do Glassdoor BR e global: host_matches_domains não casa
+    # ".com.br" com ".com", então os dois precisam estar na lista.
+    "glassdoor": ("glassdoor.com", "glassdoor.com.br"),
 }
 JOB_BOARD_SEARCH_QUERIES = {
     "linkedin": ("site:linkedin.com/jobs/view",),
@@ -99,6 +102,8 @@ QUERY_STEMS = [
     "python junior",
     "python developer",
     "engenheiro de software python",
+    "dev python junior",
+    "vaga python junior",
 ]
 
 MAX_RESULTS_PER_QUERY = 20
@@ -155,9 +160,11 @@ REQUIRE_POSTED_AGE = env_bool("REQUIRE_POSTED_AGE", default=True)
 # O LinkedIn respondeu 429 ao 2o termo (burst), por isso entra como
 # complemento: a falha vira warning e as demais fontes seguem.
 JOBSPY_ENABLED = env_bool("JOBSPY_ENABLED", default=True)
+# glassdoor: medido em producao (2026-11-12), 10 vagas Brazil/remote em
+# 1.1s no mesmo termo. google nao devolveu nada para Brazil e ficou de fora.
 JOBSPY_SITES = tuple(
     site.strip().lower()
-    for site in os.getenv("JOBSPY_SITES", "indeed,linkedin").split(",")
+    for site in os.getenv("JOBSPY_SITES", "indeed,linkedin,glassdoor").split(",")
     if site.strip()
 )
 JOBSPY_LOCATION = os.getenv("JOBSPY_LOCATION", "Brazil")
@@ -168,6 +175,17 @@ JOBSPY_RESULTS_PER_TERM = int(os.getenv("JOBSPY_RESULTS_PER_TERM", "25"))
 JOBSPY_HOURS_OLD = int(
     os.getenv("JOBSPY_HOURS_OLD", str(max(MAX_JOB_AGE_DAYS, 1) * 24))
 )
+# Termos extras so para o JobSpy: cada um vira uma chamada propria ao board,
+# sem o limite de comprimento da query OR do DDG. Medido em producao
+# (2026-11-12, indeed+glassdoor): "python junior" 30, "vaga python junior" 30,
+# "python junior remoto" 18, "desenvolvedor python junior" 17,
+# "junior python developer" 10 (results_wanted=15 por termo).
+JOBSPY_EXTRA_QUERY_STEMS = (
+    "desenvolvedor python junior",
+    "python junior remoto",
+    "junior python developer",
+)
+JOBSPY_QUERY_STEMS = (*QUERY_STEMS, *JOBSPY_EXTRA_QUERY_STEMS)
 
 # --- Arquivos de estado -------------------------------------
 SEEN_JOBS_FILE = "seen_jobs.json"

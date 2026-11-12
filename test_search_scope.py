@@ -76,6 +76,8 @@ class SearchScopeTests(unittest.TestCase):
             "https://programathor.com.br/jobs/1",
             "https://jobs.geekhunter.com.br/vaga/1",
             "https://trampos.co/oportunidades/1",
+            # Glassdoor via JobSpy: vaga individual com jl= na query.
+            "https://www.glassdoor.com.br/job-listing/j?jl=1010324571717",
         )
         for url in accepted:
             with self.subTest(url=url):
@@ -83,7 +85,6 @@ class SearchScopeTests(unittest.TestCase):
 
         # Fora de escopo: nao estao em JOB_BOARD_DOMAINS nem no JobSpy.
         rejected = (
-            "https://www.glassdoor.com.br/Vaga/desenvolvedor-vagas",
             "https://www.monster.com/jobs/1",
             "https://linkedin.com.attacker.test/jobs/1",
         )
@@ -93,6 +94,7 @@ class SearchScopeTests(unittest.TestCase):
 
         self.assertEqual(job_site_name(accepted[0]), "linkedin")
         self.assertEqual(job_site_name(accepted[1]), "indeed")
+        self.assertEqual(job_site_name(accepted[-1]), "glassdoor")
 
     def test_listing_pages_are_rejected_even_on_allowed_boards(self):
         listings = (
@@ -100,10 +102,35 @@ class SearchScopeTests(unittest.TestCase):
             "https://br.indeed.com/q-desenvolvedor-junior-full-stack-vagas.html",
             "https://www.glassdoor.com/Job/junior-backend-developer-jobs-SRCH_KO0,24.htm",
             "https://www.glassdoor.com.br/Vaga/desenvolvedor-jr-vagas-SRCH_KO0,16.htm",
+            "https://www.glassdoor.com.br/Vaga/desenvolvedor-vagas",
         )
         for url in listings:
             with self.subTest(url=url):
                 self.assertFalse(is_supported_job_url(url))
+
+    def test_jobspy_uses_more_terms_than_the_ddg_or_query(self):
+        # O DDG junta tudo em uma query OR (limite ~200 chars); o JobSpy
+        # faz uma chamada por termo e pode ir alem sem estourar o buscador.
+        self.assertGreater(len(config.JOBSPY_QUERY_STEMS), len(config.QUERY_STEMS))
+        for stem in config.QUERY_STEMS:
+            self.assertIn(stem, config.JOBSPY_QUERY_STEMS)
+
+    def test_jobspy_search_uses_the_extended_term_list(self):
+        frame = mock.Mock()
+        frame.to_dict.return_value = []
+        scrape = mock.Mock(return_value=frame)
+        fake_jobspy = mock.Mock(scrape_jobs=scrape)
+        with (
+            mock.patch.object(config, "JOBSPY_ENABLED", True),
+            mock.patch.object(config, "JOBSPY_SITES", ("indeed",)),
+            mock.patch.object(config, "JOBSPY_QUERY_STEMS", ("termo a", "termo b")),
+            mock.patch.dict("sys.modules", {"jobspy": fake_jobspy}),
+        ):
+            job_search.jobspy_search()
+
+        self.assertEqual(scrape.call_count, 2)
+        called_terms = [call.kwargs["search_term"] for call in scrape.call_args_list]
+        self.assertEqual(called_terms, ["termo a", "termo b"])
 
 
 if __name__ == "__main__":

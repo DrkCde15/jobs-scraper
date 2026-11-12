@@ -73,7 +73,7 @@ def jobspy_search() -> list[Job]:
     results: list[Job] = []
     seen_urls: set[str] = set()
 
-    for term in config.QUERY_STEMS:
+    for term in config.JOBSPY_QUERY_STEMS:
         log.info("🔍  JobSpy buscando: %s", term)
         try:
             frame = scrape_jobs(

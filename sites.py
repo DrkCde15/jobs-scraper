@@ -86,6 +86,9 @@ LISTING_URL_PATTERNS = (
     re.compile(r"indeed\.com/q-", re.IGNORECASE),
     re.compile(r"infojobs\.com\.br/(?:vaga|vagas)-de-", re.IGNORECASE),
     re.compile(r"glassdoor\.[^/]+/Salary/", re.IGNORECASE),
+    # Glassdoor BR: /Vaga/<slug> e pagina de busca; a vaga individual e
+    # /job-listing/j?jl=<id>.
+    re.compile(r"glassdoor\.[^/]+/Vaga/", re.IGNORECASE),
     re.compile(r"SRCH_", re.IGNORECASE),
     re.compile(r"vagas\.com\.br/vagas-de-", re.IGNORECASE),
     re.compile(r"gupy\.io/job-search/", re.IGNORECASE),
@@ -137,6 +140,12 @@ def remove_url_tracking(url: str) -> str:
     if "indeed.com" in host:
         keep_params = {
             key: values for key, values in parse_qs(parsed_url.query).items() if key == "jk"
+        }
+    elif "glassdoor." in host:
+        # A identidade da vaga do Glassdoor e o jl= na query; sem ele a URL
+        # normalizada vira /job-listing/j para toda vaga e o dedup colapsa.
+        keep_params = {
+            key: values for key, values in parse_qs(parsed_url.query).items() if key == "jl"
         }
     else:
         keep_params = {}

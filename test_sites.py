@@ -162,6 +162,7 @@ class ListingUrlTests(unittest.TestCase):
             "https://www.infojobs.com.br/vagas-de-emprego-x.aspx",
             "https://www.glassdoor.com/Salary/x-Salaries-E1.htm",
             "https://www.glassdoor.com.br/Vaga/x-SRCH_KO0,16.htm",
+            "https://www.glassdoor.com.br/Vaga/desenvolvedor-vagas",
             "https://www.vagas.com.br/vagas-de-desenvolvedor-junior",
             "https://portal.gupy.io/job-search/term=Desenvolvedor+j%C3%BAnior",
             "https://programathor.com.br/jobs-city/remoto",
@@ -185,6 +186,8 @@ class ListingUrlTests(unittest.TestCase):
             "https://trampos.co/oportunidades/774739",
             "https://www.catho.com.br/vagas/desenvolvedora-java-jr-remoto/39094103",
             "https://www.geekhunter.com.br/vaga/desenvolvedor-a-backend-jr-pl-automacao-e-ia",
+            "https://www.glassdoor.com.br/job-listing/j?jl=1010324571717",
+            "https://www.glassdoor.com/job-listing/j?jl=1010324571717",
         )
         for url in listings:
             with self.subTest(url=url):
@@ -192,6 +195,25 @@ class ListingUrlTests(unittest.TestCase):
         for url in job_pages:
             with self.subTest(url=url):
                 self.assertFalse(sites.is_listing_url(url))
+
+
+class NormalizeUrlTests(unittest.TestCase):
+    def test_glassdoor_job_id_survives_tracking_strip(self):
+        # Sem o jl= a URL normalizada vira /job-listing/j para toda vaga
+        # e o dedup colapsa o Glassdoor inteiro em uma linha.
+        normalized = sites.normalize_job_url(
+            "https://www.glassdoor.com.br/job-listing/j?jl=1010324571717&src=gd_search"
+        )
+        self.assertEqual(
+            normalized,
+            "https://www.glassdoor.com.br/job-listing/j?jl=1010324571717",
+        )
+
+    def test_indeed_job_id_still_survives_tracking_strip(self):
+        normalized = sites.normalize_job_url(
+            "https://br.indeed.com/viewjob?jk=abc&from=serp&vjs=3"
+        )
+        self.assertEqual(normalized, "https://br.indeed.com/viewjob?jk=abc")
 
 
 class WorkplaceExtractionTests(unittest.TestCase):
